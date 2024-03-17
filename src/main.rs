@@ -123,7 +123,7 @@ fn spawn_building(
     team: Team,
     x: f32,
     y: f32,
-    asset_server: Res<AssetServer>,
+    asset_server: &Res<AssetServer>,
 ) {
     let mut building_entity = commands.spawn((
         Unit { team },
@@ -162,7 +162,8 @@ fn spawn_building(
 }
 
 fn add_buildings(mut commands: Commands, asset_server: Res<AssetServer>) {
-    spawn_building(&mut commands, Team::TeamRed, 32.0 * -4.0, 0., asset_server)
+    spawn_building(&mut commands, Team::TeamRed, 32.0 * -4.0, 0., &asset_server);
+    spawn_building(&mut commands, Team::TeamBlue, 32.0 * 4.0, 0., &asset_server);
 }
 
 fn add_units(
