@@ -1,5 +1,5 @@
 [package]
-name = "bevy_template" # TODO: change this to your project name. This is the name of the binary that will be produced and should also be updated in the release github action.
+name = "bevy_castle_fight"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.13.0"
+bevy_rapier2d = "0.25.0"
+
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
