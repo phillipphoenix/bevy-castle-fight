@@ -1,23 +1,23 @@
 mod waypoints;
 
+use bevy::render::render_resource::{AsBindGroup, ShaderRef};
+use bevy::sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle};
 use bevy::{
     prelude::*,
     render::{settings::WgpuSettings, RenderPlugin},
     utils::HashMap,
 };
-use bevy::render::render_resource::{AsBindGroup, ShaderRef};
-use bevy::sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle, Mesh2dHandle};
 use waypoints::*;
 
 #[derive(Clone, Copy)]
 enum Team {
     TeamRed,
-    TeamBlue
+    TeamBlue,
 }
 
 #[derive(Component)]
 struct Unit {
-    team: Team
+    team: Team,
 }
 
 #[derive(Component)]
@@ -29,7 +29,7 @@ struct Building;
 #[derive(Component)]
 struct UnitSpawner {
     spawn_time: f32,
-    time_left: f32
+    time_left: f32,
 }
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
@@ -54,19 +54,28 @@ struct TeamMaterials {
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins.set(RenderPlugin {
-            render_creation: bevy::render::settings::RenderCreation::Automatic(WgpuSettings {
-                // This is necessary to remove infinite errors on Windows machines with AMD GPUs.
-                // Might not be required in the future - (2024-03-14).
-                backends: Some(bevy::render::settings::Backends::VULKAN),
-                ..Default::default()
+        .add_plugins((
+            DefaultPlugins.set(RenderPlugin {
+                render_creation: bevy::render::settings::RenderCreation::Automatic(WgpuSettings {
+                    // This is necessary to remove infinite errors on Windows machines with AMD GPUs.
+                    // Might not be required in the future - (2024-03-14).
+                    backends: Some(bevy::render::settings::Backends::VULKAN),
+                    ..Default::default()
+                }),
+                synchronous_pipeline_compilation: true,
             }),
-            synchronous_pipeline_compilation: true,
-        }), Material2dPlugin::<TeamColourMaterial>::default()))
+            Material2dPlugin::<TeamColourMaterial>::default(),
+        ))
         .insert_resource(WaypointMap {
             all_waypoints: HashMap::default(),
         })
-        .add_systems(Startup, (setup_materials.before(add_units).before(add_buildings), add_camera))
+        .add_systems(
+            Startup,
+            (
+                setup_materials.before(add_units).before(add_buildings),
+                add_camera,
+            ),
+        )
         .add_systems(Startup, add_waypoints.before(add_units))
         .add_systems(Startup, add_units)
         .add_systems(Startup, add_buildings)
@@ -90,7 +99,7 @@ fn setup_materials(mut commands: Commands, mut materials: ResMut<Assets<TeamColo
 
     commands.insert_resource(TeamMaterials {
         team_red: material_red,
-        team_blue: material_blue
+        team_blue: material_blue,
     });
 }
 
@@ -110,15 +119,13 @@ fn spawn_unit(
     };
 
     let mut unit_entity = commands.spawn((
-        Unit {
-            team
-        },
+        Unit { team },
         MovementSpeed(64.),
         SpriteBundle {
             transform: Transform::from_xyz(x, y, 0.),
             texture: sprite,
             ..Default::default()
-        }
+        },
     ));
 
     unit_entity.insert(MaterialMesh2dBundle {
@@ -138,7 +145,7 @@ fn spawn_unit(
 fn add_buildings(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Unit {
-            team: Team::TeamRed
+            team: Team::TeamRed,
         },
         SpriteBundle {
             texture: asset_server.load("prototype-building.png"),
@@ -148,7 +155,7 @@ fn add_buildings(mut commands: Commands, asset_server: Res<AssetServer>) {
         UnitSpawner {
             spawn_time: 5.0,
             time_left: 5.0,
-        }
+        },
     ));
 }
 
@@ -161,7 +168,7 @@ fn add_units(
 
     commands.spawn((
         Unit {
-            team: Team::TeamRed
+            team: Team::TeamRed,
         },
         MovementSpeed(64.),
         SpriteBundle {
@@ -174,12 +181,28 @@ fn add_units(
     ));
 }
 
-fn spawn_units(mut commands: Commands, asset_server: Res<AssetServer>, team_materials: Res<TeamMaterials>, waypoint_map: Res<WaypointMap>, time: Res<Time>, mut query: Query<(&mut UnitSpawner, &Transform, &Unit)>) {
+fn spawn_units(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    team_materials: Res<TeamMaterials>,
+    waypoint_map: Res<WaypointMap>,
+    time: Res<Time>,
+    mut query: Query<(&mut UnitSpawner, &Transform, &Unit)>,
+) {
     for (mut unit_spawner, transform, unit) in query.iter_mut() {
         if unit_spawner.time_left > 0. {
             unit_spawner.time_left -= time.delta_seconds()
         } else {
-            spawn_unit(&mut commands, unit.team, &team_materials, asset_server.load("prototype-unit.png"), transform.translation.x, transform.translation.y, &waypoint_map, Some("First".to_string()));
+            spawn_unit(
+                &mut commands,
+                unit.team,
+                &team_materials,
+                asset_server.load("prototype-unit.png"),
+                transform.translation.x,
+                transform.translation.y,
+                &waypoint_map,
+                Some("First".to_string()),
+            );
             unit_spawner.time_left = unit_spawner.spawn_time
         }
     }

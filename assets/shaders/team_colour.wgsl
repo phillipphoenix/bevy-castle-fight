@@ -13,6 +13,7 @@
 @fragment
 fn fs_main(@location(0) tex_coords: vec2<f32>, @location(1) frag_color: vec4<f32>, @binding(0) texture: texture_2d<f32>, @binding(1) color_to_replace: vec4<f32>, @binding(2) replacement_color: vec4<f32>) -> @location(0) vec4<f32> {
     let original_color = textureSample(texture, tex_coords);
+    return replacement_color;
     if (distance(original_color, color_to_replace) < 0.1) { // Adjust threshold as needed
         return replacement_color;
     } else {
