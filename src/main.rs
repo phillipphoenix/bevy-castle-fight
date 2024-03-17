@@ -1,18 +1,28 @@
-mod waypoints;
-
-use bevy::render::render_resource::{AsBindGroup, ShaderRef};
-use bevy::sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle};
 use bevy::{
     prelude::*,
     render::{settings::WgpuSettings, RenderPlugin},
     utils::HashMap,
 };
+use std::fmt;
+use std::fmt::Formatter;
+
 use waypoints::*;
+
+mod waypoints;
 
 #[derive(Clone, Copy)]
 enum Team {
     TeamRed,
     TeamBlue,
+}
+
+impl fmt::Display for Team {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Team::TeamRed => write!(f, "RED"),
+            Team::TeamBlue => write!(f, "BLUE"),
+        }
+    }
 }
 
 #[derive(Component)]
@@ -32,50 +42,21 @@ struct UnitSpawner {
     time_left: f32,
 }
 
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct TeamColourMaterial {
-    #[uniform(0)]
-    colour_base: Vec4,
-    #[uniform(1)]
-    colour_team: Vec4,
-}
-
-impl Material2d for TeamColourMaterial {
-    fn fragment_shader() -> ShaderRef {
-        "shaders/team_colour.wgsl".into()
-    }
-}
-
-#[derive(Resource)]
-struct TeamMaterials {
-    team_red: Handle<TeamColourMaterial>,
-    team_blue: Handle<TeamColourMaterial>,
-}
-
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins.set(RenderPlugin {
-                render_creation: bevy::render::settings::RenderCreation::Automatic(WgpuSettings {
-                    // This is necessary to remove infinite errors on Windows machines with AMD GPUs.
-                    // Might not be required in the future - (2024-03-14).
-                    backends: Some(bevy::render::settings::Backends::VULKAN),
-                    ..Default::default()
-                }),
-                synchronous_pipeline_compilation: true,
+        .add_plugins((DefaultPlugins.set(RenderPlugin {
+            render_creation: bevy::render::settings::RenderCreation::Automatic(WgpuSettings {
+                // This is necessary to remove infinite errors on Windows machines with AMD GPUs.
+                // Might not be required in the future - (2024-03-14).
+                backends: Some(bevy::render::settings::Backends::VULKAN),
+                ..Default::default()
             }),
-            Material2dPlugin::<TeamColourMaterial>::default(),
-        ))
+            synchronous_pipeline_compilation: true,
+        }),))
         .insert_resource(WaypointMap {
             all_waypoints: HashMap::default(),
         })
-        .add_systems(
-            Startup,
-            (
-                setup_materials.before(add_units).before(add_buildings),
-                add_camera,
-            ),
-        )
+        .add_systems(Startup, (add_camera,))
         .add_systems(Startup, add_waypoints.before(add_units))
         .add_systems(Startup, add_units)
         .add_systems(Startup, add_buildings)
@@ -87,37 +68,15 @@ fn add_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn setup_materials(mut commands: Commands, mut materials: ResMut<Assets<TeamColourMaterial>>) {
-    let material_red = materials.add(TeamColourMaterial {
-        colour_base: Color::WHITE.rgba_to_vec4(),
-        colour_team: Color::RED.rgba_to_vec4(),
-    });
-    let material_blue = materials.add(TeamColourMaterial {
-        colour_base: Color::WHITE.rgba_to_vec4(),
-        colour_team: Color::BLUE.rgba_to_vec4(),
-    });
-
-    commands.insert_resource(TeamMaterials {
-        team_red: material_red,
-        team_blue: material_blue,
-    });
-}
-
 fn spawn_unit(
     commands: &mut Commands,
     team: Team,
-    team_materials: &Res<TeamMaterials>,
     sprite: Handle<Image>,
     x: f32,
     y: f32,
     waypoint_map: &Res<WaypointMap>,
     waypoint_id: Option<String>,
 ) {
-    let material_handle = match team {
-        Team::TeamRed => team_materials.team_red.clone(),
-        Team::TeamBlue => team_materials.team_blue.clone(),
-    };
-
     let mut unit_entity = commands.spawn((
         Unit { team },
         MovementSpeed(64.),
@@ -128,9 +87,26 @@ fn spawn_unit(
         },
     ));
 
-    unit_entity.insert(MaterialMesh2dBundle {
-        material: material_handle,
-        ..Default::default()
+    let text_color = match team {
+        Team::TeamRed => Color::RED,
+        Team::TeamBlue => Color::BLUE,
+    };
+
+    unit_entity.with_children(|builder| {
+        builder.spawn(Text2dBundle {
+            text: Text {
+                sections: vec![TextSection::new(
+                    team.to_string(),
+                    TextStyle {
+                        color: text_color,
+                        ..Default::default()
+                    },
+                )],
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(0.0, -22.0, 1.0)),
+            ..Default::default()
+        });
     });
 
     if let Some(ref waypoint_id_str) = waypoint_id {
@@ -142,14 +118,18 @@ fn spawn_unit(
     }
 }
 
-fn add_buildings(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((
-        Unit {
-            team: Team::TeamRed,
-        },
+fn spawn_building(
+    commands: &mut Commands,
+    team: Team,
+    x: f32,
+    y: f32,
+    asset_server: Res<AssetServer>,
+) {
+    let mut building_entity = commands.spawn((
+        Unit { team },
         SpriteBundle {
             texture: asset_server.load("prototype-building.png"),
-            transform: Transform::from_xyz(32.0 * -4.0, 0., 0.),
+            transform: Transform::from_xyz(x, y, 0.),
             ..Default::default()
         },
         UnitSpawner {
@@ -157,6 +137,32 @@ fn add_buildings(mut commands: Commands, asset_server: Res<AssetServer>) {
             time_left: 5.0,
         },
     ));
+
+    let text_color = match team {
+        Team::TeamRed => Color::RED,
+        Team::TeamBlue => Color::BLUE,
+    };
+
+    building_entity.with_children(|builder| {
+        builder.spawn(Text2dBundle {
+            text: Text {
+                sections: vec![TextSection::new(
+                    team.to_string(),
+                    TextStyle {
+                        color: text_color,
+                        ..Default::default()
+                    },
+                )],
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(0.0, -40.0, 1.0)),
+            ..Default::default()
+        });
+    });
+}
+
+fn add_buildings(mut commands: Commands, asset_server: Res<AssetServer>) {
+    spawn_building(&mut commands, Team::TeamRed, 32.0 * -4.0, 0., asset_server)
 }
 
 fn add_units(
@@ -164,27 +170,36 @@ fn add_units(
     asset_server: Res<AssetServer>,
     waypoint_map: Res<WaypointMap>,
 ) {
-    let first_waypoint = waypoint_map.all_waypoints.get("First").unwrap();
+    // let first_waypoint = waypoint_map.all_waypoints.get("First").unwrap();
 
-    commands.spawn((
-        Unit {
-            team: Team::TeamRed,
-        },
-        MovementSpeed(64.),
-        SpriteBundle {
-            texture: asset_server.load("prototype-unit.png"),
-            ..Default::default()
-        },
-        WaypointFollower {
-            waypoint: *first_waypoint,
-        },
-    ));
+    spawn_unit(
+        &mut commands,
+        Team::TeamRed,
+        asset_server.load("prototype-unit.png"),
+        0.,
+        0.,
+        &waypoint_map,
+        Some("First".to_string()),
+    );
+
+    // commands.spawn((
+    //     Unit {
+    //         team: Team::TeamRed,
+    //     },
+    //     MovementSpeed(64.),
+    //     SpriteBundle {
+    //         texture: asset_server.load("prototype-unit.png"),
+    //         ..Default::default()
+    //     },
+    //     WaypointFollower {
+    //         waypoint: *first_waypoint,
+    //     },
+    // ));
 }
 
 fn spawn_units(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    team_materials: Res<TeamMaterials>,
     waypoint_map: Res<WaypointMap>,
     time: Res<Time>,
     mut query: Query<(&mut UnitSpawner, &Transform, &Unit)>,
@@ -196,7 +211,6 @@ fn spawn_units(
             spawn_unit(
                 &mut commands,
                 unit.team,
-                &team_materials,
                 asset_server.load("prototype-unit.png"),
                 transform.translation.x,
                 transform.translation.y,
