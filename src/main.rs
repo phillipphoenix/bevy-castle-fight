@@ -224,7 +224,7 @@ fn go_to_next_waypoint(
     waypoint_waypoint_query: Query<&Waypoint>,
 ) {
     for (entity, movement_speed, mut transform, mut follower) in query.iter_mut() {
-        if let Some(waypoint_transform) = waypoint_transform_query.get(follower.waypoint).ok() {
+        if let Ok(waypoint_transform) = waypoint_transform_query.get(follower.waypoint) {
             let direction = waypoint_transform.translation - transform.translation;
             let distance = direction.length();
 
