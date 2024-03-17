@@ -3,6 +3,7 @@ use bevy::{
     render::{settings::WgpuSettings, RenderPlugin},
     utils::HashMap,
 };
+use bevy_rapier2d::prelude::*;
 use std::fmt;
 use std::fmt::Formatter;
 
@@ -10,7 +11,7 @@ use waypoints::*;
 
 mod waypoints;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum Team {
     TeamRed,
     TeamBlue,
@@ -34,6 +35,20 @@ struct Unit {
 struct MovementSpeed(f32);
 
 #[derive(Component)]
+struct Health {
+    max_health: f32,
+    health: f32,
+}
+
+#[derive(Component)]
+struct Attack {
+    target: Option<Entity>,
+    damage: f32,
+    attack_speed: f32,
+    time_till_next_attack: f32,
+}
+
+#[derive(Component)]
 struct Building;
 
 #[derive(Component)]
@@ -44,23 +59,29 @@ struct UnitSpawner {
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins.set(RenderPlugin {
-            render_creation: bevy::render::settings::RenderCreation::Automatic(WgpuSettings {
-                // This is necessary to remove infinite errors on Windows machines with AMD GPUs.
-                // Might not be required in the future - (2024-03-14).
-                backends: Some(bevy::render::settings::Backends::VULKAN),
-                ..Default::default()
+        .add_plugins((
+            DefaultPlugins.set(RenderPlugin {
+                render_creation: bevy::render::settings::RenderCreation::Automatic(WgpuSettings {
+                    // This is necessary to remove infinite errors on Windows machines with AMD GPUs.
+                    // Might not be required in the future - (2024-03-14).
+                    backends: Some(bevy::render::settings::Backends::VULKAN),
+                    ..Default::default()
+                }),
+                synchronous_pipeline_compilation: true,
             }),
-            synchronous_pipeline_compilation: true,
-        }),))
+            RapierPhysicsPlugin::<NoUserData>::default(),
+        ))
         .insert_resource(WaypointMap {
             all_waypoints: HashMap::default(),
         })
         .add_systems(Startup, (add_camera,))
         .add_systems(Startup, add_waypoints.before(add_units))
-        .add_systems(Startup, add_units)
+        // .add_systems(Startup, add_units)
         .add_systems(Startup, add_buildings)
-        .add_systems(Update, (go_to_next_waypoint, spawn_units))
+        .add_systems(
+            Update,
+            (go_to_next_waypoint, spawn_units, detect_targets_system),
+        )
         .run();
 }
 
@@ -85,6 +106,8 @@ fn spawn_unit(
             texture: sprite,
             ..Default::default()
         },
+        Collider::ball(16.0),
+        Sensor,
     ));
 
     let text_color = match team {
@@ -171,8 +194,6 @@ fn add_units(
     asset_server: Res<AssetServer>,
     waypoint_map: Res<WaypointMap>,
 ) {
-    // let first_waypoint = waypoint_map.all_waypoints.get("First").unwrap();
-
     spawn_unit(
         &mut commands,
         Team::TeamRed,
@@ -182,20 +203,6 @@ fn add_units(
         &waypoint_map,
         Some("First".to_string()),
     );
-
-    // commands.spawn((
-    //     Unit {
-    //         team: Team::TeamRed,
-    //     },
-    //     MovementSpeed(64.),
-    //     SpriteBundle {
-    //         texture: asset_server.load("prototype-unit.png"),
-    //         ..Default::default()
-    //     },
-    //     WaypointFollower {
-    //         waypoint: *first_waypoint,
-    //     },
-    // ));
 }
 
 fn spawn_units(
@@ -257,6 +264,42 @@ fn go_to_next_waypoint(
                 // Move towards the waypoint.
                 let move_direction = direction.normalize();
                 transform.translation += move_direction * movement_speed.0 * time.delta_seconds();
+            }
+        }
+    }
+}
+
+fn detect_targets_system(
+    mut collisions: EventReader<CollisionEvent>,
+    mut unit_attack_query: Query<(Entity, &Unit, &mut Attack)>,
+    unit_defend_query: Query<(Entity, &Unit, &Health)>,
+) {
+    for collision in collisions.read() {
+        match collision {
+            CollisionEvent::Started(entity1, entity2, _) => {
+                // Get the units.
+                let maybe_unit1 = unit_attack_query.get_mut(*entity1);
+                let maybe_unit2 = unit_defend_query.get(*entity2);
+
+                if let (Ok((_, unit1, mut unit1_attack)), Ok((unit2_entity, unit2, _))) =
+                    (maybe_unit1, maybe_unit2)
+                {
+                    if unit1.team != unit2.team && unit1_attack.target.is_none() {
+                        unit1_attack.target = Some(unit2_entity);
+                        println!("Target found!")
+                    }
+                }
+            }
+            CollisionEvent::Stopped(entity1, entity2, _) => {
+                let maybe_unit1 = unit_attack_query.get_mut(*entity1);
+
+                if let Ok((_, _, mut unit1_attack)) = maybe_unit1 {
+                    if let Some(target) = unit1_attack.target {
+                        if target == *entity2 {
+                            unit1_attack.target = None;
+                        }
+                    }
+                }
             }
         }
     }
