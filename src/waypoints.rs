@@ -59,21 +59,61 @@ pub fn add_waypoints(
         entity
     };
 
-    let waypoint3 = spawn_waypoint(&mut commands, &asset_server, None, 32. * 5., 32. * 5., None);
-    let waypoint2 = spawn_waypoint(
+    // --- RED team waypoints
+    let waypoint3_red = spawn_waypoint(
         &mut commands,
         &asset_server,
         None,
-        32.,
+        32. * -5.,
         32. * 5.,
-        Some(waypoint3),
+        None,
     );
-    let _ = spawn_waypoint(
+    let waypoint2_red = spawn_waypoint(
         &mut commands,
         &asset_server,
-        Some("First".to_string()),
-        32.,
+        None,
         0.,
-        Some(waypoint2),
+        32. * 5.,
+        Some(waypoint3_red),
     );
+    let waypoint1_red = spawn_waypoint(
+        &mut commands,
+        &asset_server,
+        Some("FirstRed".to_string()),
+        0.,
+        0.,
+        Some(waypoint2_red),
+    );
+
+    // Make the waypoints loop.
+    commands.entity(waypoint3_red).insert(Waypoint {
+        id: None,
+        next_waypoint: Some(waypoint1_red),
+    });
+
+    // --- BLUE team waypoints
+    let waypoint3_blue =
+        spawn_waypoint(&mut commands, &asset_server, None, 32. * 5., 32. * 5., None);
+    let waypoint2_blue = spawn_waypoint(
+        &mut commands,
+        &asset_server,
+        None,
+        0.,
+        32. * 5.,
+        Some(waypoint3_blue),
+    );
+    let waypoint1_blue = spawn_waypoint(
+        &mut commands,
+        &asset_server,
+        Some("FirstBlue".to_string()),
+        0.,
+        0.,
+        Some(waypoint2_blue),
+    );
+
+    // Make the waypoints loop.
+    commands.entity(waypoint3_blue).insert(Waypoint {
+        id: None,
+        next_waypoint: Some(waypoint1_blue),
+    });
 }
