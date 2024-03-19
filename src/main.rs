@@ -52,9 +52,21 @@ struct Attack {
 struct Building;
 
 #[derive(Component)]
+struct BuildingGhost {
+    placement_valid: bool,
+    team: Team,
+}
+
+#[derive(Component)]
 struct UnitSpawner {
     spawn_time: f32,
     time_left: f32,
+}
+
+#[derive(Resource)]
+struct MousePosition {
+    x: f32,
+    y: f32,
 }
 
 fn main() {
@@ -75,10 +87,12 @@ fn main() {
         .insert_resource(WaypointMap {
             all_waypoints: HashMap::default(),
         })
+        .insert_resource(MousePosition { x: 0., y: 0. })
         .add_systems(Startup, (add_camera,))
         .add_systems(Startup, add_waypoints.before(add_units))
         // .add_systems(Startup, add_units)
         .add_systems(Startup, add_buildings)
+        .add_systems(Update, get_mouse_position)
         .add_systems(
             Update,
             (
@@ -87,6 +101,16 @@ fn main() {
                 detect_targets_system,
                 attack_system,
                 check_death.after(attack_system),
+            ),
+        )
+        .add_systems(
+            Update,
+            (
+                building_system,
+                update_ghost_building_position,
+                cancel_building,
+                ghost_building_collision_system,
+                building_placement,
             ),
         )
         .run();
@@ -160,21 +184,16 @@ fn spawn_unit(
     }
 }
 
-fn spawn_building(
-    commands: &mut Commands,
-    team: Team,
-    x: f32,
-    y: f32,
-    asset_server: &Res<AssetServer>,
-) {
+fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprite: Handle<Image>) {
     let mut building_entity = commands.spawn((
         Unit { team },
+        Building,
         Health {
             health: 10.,
             max_health: 10.,
         },
         SpriteBundle {
-            texture: asset_server.load("prototype-building.png"),
+            texture: sprite,
             transform: Transform::from_xyz(x, y, 0.),
             ..Default::default()
         },
@@ -211,9 +230,52 @@ fn spawn_building(
     });
 }
 
+fn spawn_ghost_building(
+    commands: &mut Commands,
+    team: Team,
+    x: f32,
+    y: f32,
+    sprite: Handle<Image>,
+) {
+    commands.spawn((
+        BuildingGhost {
+            placement_valid: true,
+            team,
+        },
+        SpriteBundle {
+            texture: sprite,
+            transform: Transform::from_xyz(x, y, 0.),
+            sprite: Sprite {
+                color: Color::rgba(0.5, 1.0, 0.5, 0.5),
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        Collider::cuboid(32.0, 32.0),
+        Sensor,
+        ActiveCollisionTypes::all(), // TODO: Optimize later.
+        // TODO: Set collision groups for further optimisation.
+        ActiveEvents::COLLISION_EVENTS,
+    ));
+}
+
 fn add_buildings(mut commands: Commands, asset_server: Res<AssetServer>) {
-    spawn_building(&mut commands, Team::TeamRed, 32.0 * -4.0, 0., &asset_server);
-    spawn_building(&mut commands, Team::TeamBlue, 32.0 * 4.0, 0., &asset_server);
+    let building_sprite = asset_server.load("prototype-building.png");
+
+    spawn_building(
+        &mut commands,
+        Team::TeamRed,
+        32.0 * -4.0,
+        0.,
+        building_sprite.clone(),
+    );
+    spawn_building(
+        &mut commands,
+        Team::TeamBlue,
+        32.0 * 4.0,
+        0.,
+        building_sprite.clone(),
+    );
 }
 
 fn add_units(
@@ -319,10 +381,6 @@ fn detect_targets_system(
             {
                 if unit1.team != unit2.team && unit1_attack.target.is_none() {
                     unit1_attack.target = Some(unit2_entity);
-                    info!(
-                        "Unit from team {:?} found target from team: {:?}!",
-                        unit1.team, unit2.team
-                    )
                 }
             }
         };
@@ -333,14 +391,10 @@ fn detect_targets_system(
          unit_attack_query: &mut Query<(Entity, &Unit, &mut Attack)>| {
             let maybe_unit1 = unit_attack_query.get_mut(*entity1);
 
-            if let Ok((_, unit1, mut unit1_attack)) = maybe_unit1 {
+            if let Ok((_, _, mut unit1_attack)) = maybe_unit1 {
                 if let Some(target) = unit1_attack.target {
                     if target == *entity2 {
                         unit1_attack.target = None;
-                        info!(
-                            "Unit from team {:?} lost sight of their target...",
-                            unit1.team
-                        )
                     }
                 }
             }
@@ -393,6 +447,150 @@ fn check_death(mut commands: Commands, query: Query<(Entity, &Health), With<Unit
         if health.health <= 0. {
             commands.entity(entity).despawn_recursive();
             info!("{:?} died as health was depleted!", entity);
+        }
+    }
+}
+
+fn get_mouse_position(
+    window_query: Query<&Window>,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+    mut mouse_position: ResMut<MousePosition>,
+) {
+    if let Ok(window) = window_query.get_single() {
+        if let Ok((camera, camera_transform)) = camera_query.get_single() {
+            if let Some(mouse_world_pos) = window
+                .cursor_position()
+                .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
+                .map(|ray| (ray.x, ray.y))
+            {
+                mouse_position.x = mouse_world_pos.0;
+                mouse_position.y = mouse_world_pos.1;
+            }
+        }
+    }
+}
+
+fn building_system(
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    asset_server: Res<AssetServer>,
+    query: Query<Entity, With<BuildingGhost>>,
+    mouse_position: Res<MousePosition>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyQ) && query.is_empty() {
+        let building_sprite = asset_server.load("prototype-building.png");
+        spawn_ghost_building(
+            &mut commands,
+            Team::TeamRed,
+            mouse_position.x,
+            mouse_position.y,
+            building_sprite,
+        )
+    }
+    if keyboard_input.just_pressed(KeyCode::KeyW) && query.is_empty() {
+        let building_sprite = asset_server.load("prototype-building.png");
+        spawn_ghost_building(
+            &mut commands,
+            Team::TeamBlue,
+            mouse_position.x,
+            mouse_position.y,
+            building_sprite,
+        )
+    }
+}
+
+fn update_ghost_building_position(
+    mut query: Query<&mut Transform, With<BuildingGhost>>,
+    mouse_position: Res<MousePosition>,
+) {
+    if let Ok(mut ghost_transform) = query.get_single_mut() {
+        ghost_transform.translation = Vec3::new(mouse_position.x, mouse_position.y, 1.);
+    }
+}
+
+fn cancel_building(
+    mut commands: Commands,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
+    query: Query<Entity, With<BuildingGhost>>,
+) {
+    if let Ok(ghost_entity) = query.get_single() {
+        if mouse_button_input.just_pressed(MouseButton::Right) {
+            commands.entity(ghost_entity).despawn_recursive();
+        }
+    }
+}
+
+fn ghost_building_collision_system(
+    mut collisions: EventReader<CollisionEvent>,
+    mut ghost_query: Query<(Entity, &mut BuildingGhost, &mut Sprite)>,
+    building_query: Query<Entity, With<Building>>,
+) {
+    // Contains ghosts and if their placement is valid.
+    let mut ghost_collisions: HashMap<Entity, bool> = HashMap::new();
+
+    for event in collisions.read() {
+        match event {
+            CollisionEvent::Started(entity1, entity2, _) => {
+                let (ghost, building) = if ghost_query.get(*entity1).is_ok() {
+                    (entity1, entity2)
+                } else if ghost_query.get(*entity2).is_ok() {
+                    (entity2, entity1)
+                } else {
+                    continue;
+                };
+
+                if building_query.get(*building).is_ok() {
+                    ghost_collisions.insert(*ghost, false);
+                }
+            }
+            CollisionEvent::Stopped(entity1, entity2, _) => {
+                let (ghost, building) = if ghost_query.get(*entity1).is_ok() {
+                    (entity1, entity2)
+                } else if ghost_query.get(*entity2).is_ok() {
+                    (entity2, entity1)
+                } else {
+                    continue;
+                };
+
+                if building_query.get(*building).is_ok() {
+                    // When collision stops, consider re-validating placement.
+                    // This might be too optimistic if there are multiple buildings overlapping.
+                    ghost_collisions.entry(*ghost).or_insert(true);
+                }
+            }
+        }
+    }
+
+    // Update ghosts based on collected collision states.
+    for (entity, placement_valid) in ghost_collisions.iter() {
+        if let Ok((_, mut ghost_building, mut ghost_sprite)) = ghost_query.get_mut(*entity) {
+            ghost_building.placement_valid = *placement_valid;
+            ghost_sprite.color = if *placement_valid {
+                Color::rgba(0.5, 1.0, 0.5, 0.5)
+            } else {
+                Color::rgba(1.0, 0.5, 0.5, 0.5)
+            };
+        }
+    }
+}
+
+fn building_placement(
+    mut commands: Commands,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
+    mut ghost_query: Query<(Entity, &BuildingGhost, &Transform), With<BuildingGhost>>,
+    asset_server: Res<AssetServer>,
+) {
+    if let Ok((ghost_entity, ghost_building, ghost_transform)) = ghost_query.get_single_mut() {
+        if ghost_building.placement_valid && mouse_button_input.just_pressed(MouseButton::Left) {
+            commands.entity(ghost_entity).despawn_recursive();
+            let building_sprite = asset_server.load("prototype-building.png");
+            spawn_building(
+                &mut commands,
+                ghost_building.team,
+                ghost_transform.translation.x,
+                ghost_transform.translation.y,
+                building_sprite,
+            )
         }
     }
 }
