@@ -106,7 +106,7 @@ fn sync_waypoint_move_target(
 ) {
     for (entity, transform, opt_move_target, mut waypoint_follower) in query.iter_mut() {
         match opt_move_target {
-            Some(move_target) => {
+            Some(mut move_target) => {
                 // If current move target is the current waypoint to follow.
                 // we check if we are close enough to the waypoint to switch to the next one.
                 if move_target.0 == waypoint_follower.waypoint {
@@ -118,6 +118,7 @@ fn sync_waypoint_move_target(
                             // Check if there is a next waypoint.
                             if let Some(next_waypoint) = waypoint.next_waypoint {
                                 waypoint_follower.waypoint = next_waypoint;
+                                move_target.0 = next_waypoint;
                             } else {
                                 // If there is no next waypoint, remove the waypoint follower.
                                 // Also remove the move target, as we have nothing to follow.
