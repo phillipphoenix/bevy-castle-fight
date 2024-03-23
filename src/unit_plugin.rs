@@ -17,7 +17,8 @@ impl Plugin for UnitPlugin {
             )
                 .before(move_towards_target),
         )
-        .add_systems(Update, move_towards_target)
+        .add_systems(Update, move_towards_target.before(move_towards_point))
+        .add_systems(Update, move_towards_point)
         .add_systems(Update, attack_target);
     }
 }
@@ -138,21 +139,37 @@ fn sync_waypoint_move_target(
 
 fn move_towards_target(
     mut commands: Commands,
-    time: Res<Time>,
-    mut query: Query<(Entity, &mut Transform, &MovementSpeed, &MoveTarget)>,
+    mut query: Query<(Entity, &MoveTarget)>,
     target_query: Query<&Transform>,
 ) {
-    for (entity, mut transform, movement_speed, move_target) in query.iter_mut() {
+    for (entity, move_target) in query.iter_mut() {
         if let Ok(target_transform) = target_query.get(move_target.0) {
-            let direction = target_transform.translation - transform.translation;
-            // Move towards the target.
-            let move_direction = direction.normalize();
-            transform.translation += move_direction * movement_speed.0 * time.delta_seconds();
+            commands
+                .entity(entity)
+                .insert(MoveToPoint(target_transform.translation.truncate()));
         } else {
             // If target doesn't have a transform, it probably doesn't exist.
             // Therefore, we remove the target.
             commands.entity(entity).remove::<MoveTarget>();
         }
+    }
+}
+
+/// Moves towards one-time-use points.
+/// Should always run after systems inserting MoveToPoint components on entities.
+fn move_towards_point(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Transform, &MoveToPoint, &MovementSpeed)>,
+    time: Res<Time>,
+) {
+    for (entity, mut transform, move_to_point, movement_speed) in query.iter_mut() {
+        let direction = move_to_point.0.extend(0.) - transform.translation;
+        // Move towards the target.
+        let move_direction = direction.normalize();
+        transform.translation += (move_direction * movement_speed.0 * time.delta_seconds())
+            .clamp_length_max(direction.length());
+        // Remove the move to point.
+        commands.entity(entity).remove::<MoveToPoint>();
     }
 }
 

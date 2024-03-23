@@ -24,6 +24,7 @@ pub struct OpponentFollower;
 #[derive(Component)]
 pub struct MoveTarget(pub Entity);
 
+/// One-time use points that are used to move to.
 #[derive(Component)]
 pub struct MoveToPoint(pub Vec2);
 
