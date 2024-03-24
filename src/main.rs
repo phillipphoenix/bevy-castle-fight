@@ -5,11 +5,13 @@ mod unit_plugin;
 mod units;
 mod waypoints;
 
+use bevy::input::common_conditions::{input_just_pressed, input_toggle_active};
 use bevy::{
     prelude::*,
     render::{settings::WgpuSettings, RenderPlugin},
     utils::HashMap,
 };
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
 use waypoints::*;
@@ -38,17 +40,30 @@ fn main() {
             }),
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
+            WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
         ))
         .insert_resource(WaypointMap {
             all_waypoints: HashMap::default(),
         })
         .insert_resource(MousePosition { x: 0., y: 0. })
         .add_plugins((UnitPlugin, BuildingPlugin))
-        .add_systems(Startup, (add_camera,))
+        .add_systems(Startup, add_camera)
         .add_systems(Startup, add_waypoints)
+        .add_systems(
+            Update,
+            toggle_pause.run_if(input_just_pressed(KeyCode::Space)),
+        )
         .add_systems(Update, check_death)
         .add_systems(Update, get_mouse_position)
         .run();
+}
+
+fn toggle_pause(mut time: ResMut<Time<Virtual>>) {
+    if time.is_paused() {
+        time.unpause();
+    } else {
+        time.pause();
+    }
 }
 
 fn add_camera(mut commands: Commands) {

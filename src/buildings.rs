@@ -34,8 +34,11 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
             spawn_time: 5.0,
             time_left: 5.0,
         },
-        Collider::cuboid(32.0, 32.0),
-        Sensor,
+        RigidBody::KinematicPositionBased,
+        // Add below back, if building has attack and a vision range.
+        // Collider::cuboid(32.0 * 2, 32.0 * 2),
+        // Sensor,
+        CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
         ActiveCollisionTypes::all(), // TODO: Optimize later.
         ActiveEvents::COLLISION_EVENTS,
     ));
@@ -44,6 +47,13 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
         Team::TeamRed => Color::RED,
         Team::TeamBlue => Color::BLUE,
     };
+
+    building_entity.with_children(|builder| {
+        builder.spawn((
+            Collider::cuboid(32.0, 32.0), // Actual collider matching sprite size.
+            CollisionGroups::new(Group::GROUP_1, Group::GROUP_2),
+        ));
+    });
 
     building_entity.with_children(|builder| {
         builder.spawn(Text2dBundle {

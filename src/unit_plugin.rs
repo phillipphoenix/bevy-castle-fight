@@ -31,7 +31,24 @@ fn vision_detect_target(
     attack_query: Query<(Entity, &TeamEntity), (With<AttackStats>, Without<AttackTarget>)>,
     defend_query: Query<(Entity, &TeamEntity), With<Health>>,
     attack_target_query: Query<(Entity, &AttackTarget, Option<&MoveTarget>)>,
+    sensor_query: Query<&Sensor>,
+    parent_query: Query<&Parent>,
 ) {
+    let sort_entities = |entity1: &Entity, entity2: &Entity| -> Option<(Entity, Entity)> {
+        if sensor_query.get(*entity1).is_ok() {
+            let opt_rigid_body_entity = parent_query.get(*entity2);
+            if let Ok(seen_entity) = opt_rigid_body_entity {
+                return Some((*entity1, seen_entity.get()));
+            }
+        } else if sensor_query.get(*entity2).is_ok() {
+            let opt_rigid_body_entity = parent_query.get(*entity1);
+            if let Ok(seen_entity) = opt_rigid_body_entity {
+                return Some((*entity2, seen_entity.get()));
+            }
+        }
+        None
+    };
+
     let check_set_target = |entity1: &Entity, entity2: &Entity, commands: &mut Commands| {
         if let Ok((attacker_entity, attacker_team)) = attack_query.get(*entity1) {
             if let Ok((defender_entity, defender_team)) = defend_query.get(*entity2) {
@@ -40,7 +57,11 @@ fn vision_detect_target(
                         .entity(attacker_entity)
                         .insert(AttackTarget(defender_entity));
                 }
+            } else {
+                info!("Defender not found...");
             }
+        } else {
+            info!("Attacker not found...")
         }
     };
 
@@ -49,13 +70,10 @@ fn vision_detect_target(
             if target.0 == *entity2 {
                 commands.entity(attacker_entity).remove::<AttackTarget>();
                 // If the unit is also moving towards the attack target, remove the move target too.
-                match opt_move_target {
-                    Some(move_target) => {
-                        if move_target.0 == *entity2 {
-                            commands.entity(attacker_entity).remove::<MoveTarget>();
-                        }
+                if let Some(move_target) = opt_move_target {
+                    if move_target.0 == *entity2 {
+                        commands.entity(attacker_entity).remove::<MoveTarget>();
                     }
-                    None => {}
                 }
             }
         }
@@ -64,10 +82,15 @@ fn vision_detect_target(
     for collision in collisions.read() {
         match collision {
             CollisionEvent::Started(entity1, entity2, _) => {
-                check_set_target(entity1, entity2, &mut commands);
+                if let Some((viewer, seen_entity)) = sort_entities(entity1, entity2) {
+                    info!("Viewer: {:?} has seen: {:?}", viewer, seen_entity);
+                    check_set_target(&viewer, &seen_entity, &mut commands);
+                }
             }
             CollisionEvent::Stopped(entity1, entity2, _) => {
-                check_remove_target(entity1, entity2, &mut commands)
+                if let Some((viewer, seen_entity)) = sort_entities(entity1, entity2) {
+                    check_remove_target(&viewer, &seen_entity, &mut commands);
+                }
             }
         }
     }
@@ -83,7 +106,11 @@ fn sync_attack_move_target(
 ) {
     for (entity, opt_move_target, attack_target) in attack_move_target_query.iter_mut() {
         match opt_move_target {
-            Some(mut move_target) => move_target.0 = attack_target.0,
+            Some(mut move_target) => {
+                if move_target.0 != attack_target.0 {
+                    move_target.0 = attack_target.0;
+                }
+            }
             None => {
                 commands.entity(entity).insert(MoveTarget(attack_target.0));
             }

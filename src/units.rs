@@ -40,6 +40,7 @@ pub fn spawn_unit(
     let mut unit_entity = commands.spawn((
         TeamEntity { team },
         Unit,
+        OpponentFollower,
         Health {
             health: 5.,
             max_health: 5.,
@@ -52,12 +53,14 @@ pub fn spawn_unit(
         },
         MovementSpeed(32. * 3.),
         SpriteBundle {
-            transform: Transform::from_xyz(x, y, 0.),
+            transform: Transform::from_xyz(x, y, 0.1),
             texture: sprite,
             ..Default::default()
         },
-        Collider::ball(20.0),
+        RigidBody::KinematicPositionBased,
+        Collider::ball(32. * 3.), // Vision sensor.
         Sensor,
+        CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
         ActiveCollisionTypes::all(), // TODO: Optimize later.
         ActiveEvents::COLLISION_EVENTS,
     ));
@@ -66,6 +69,13 @@ pub fn spawn_unit(
         Team::TeamRed => Color::RED,
         Team::TeamBlue => Color::BLUE,
     };
+
+    unit_entity.with_children(|builder| {
+        builder.spawn((
+            Collider::ball(20.), // Actual collider matching sprite size.
+            CollisionGroups::new(Group::GROUP_1, Group::GROUP_2),
+        ));
+    });
 
     unit_entity.with_children(|builder| {
         builder.spawn(Text2dBundle {
