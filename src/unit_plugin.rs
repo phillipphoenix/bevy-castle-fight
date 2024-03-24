@@ -1,6 +1,6 @@
 use crate::common_components::*;
 use crate::units::*;
-use crate::waypoints::{Waypoint, WaypointFollower};
+use crate::waypoint_plugin::{Waypoint, WaypointFollower};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -191,11 +191,13 @@ fn move_towards_point(
     time: Res<Time>,
 ) {
     for (entity, mut transform, move_to_point, movement_speed) in query.iter_mut() {
-        let direction = move_to_point.0.extend(0.) - transform.translation;
+        let direction = move_to_point.0 - transform.translation.xy();
         // Move towards the target.
         let move_direction = direction.normalize();
-        transform.translation += (move_direction * movement_speed.0 * time.delta_seconds())
-            .clamp_length_max(direction.length());
+        let move_amount = (move_direction.xy() * movement_speed.0 * time.delta_seconds())
+            .clamp_length_max(direction.length())
+            .extend(0.);
+        transform.translation += move_amount;
         // Remove the move to point.
         commands.entity(entity).remove::<MoveToPoint>();
     }

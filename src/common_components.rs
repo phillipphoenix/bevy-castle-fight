@@ -1,8 +1,10 @@
 use bevy::prelude::*;
+use bevy_ecs_ldtk::prelude::LdtkFields;
+use bevy_ecs_ldtk::EntityInstance;
 use std::fmt;
 use std::fmt::Formatter;
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Reflect, Hash)]
 pub enum Team {
     TeamRed,
     TeamBlue,
@@ -17,12 +19,29 @@ impl fmt::Display for Team {
     }
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
 pub struct TeamEntity {
     pub team: Team,
 }
 
-#[derive(Component, Debug)]
+impl TeamEntity {
+    pub fn from_field(entity_instance: &EntityInstance) -> TeamEntity {
+        let team_field = entity_instance
+            .get_enum_field("team")
+            .expect("Team enum wasn't found on the LDTK entity...");
+        TeamEntity {
+            team: match team_field.as_str() {
+                "RED" => Team::TeamRed,
+                "BLUE" => Team::TeamBlue,
+                _ => {
+                    panic!("Team {:?} doesn't exist!", team_field);
+                }
+            },
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
 pub struct Health {
     pub max_health: f32,
     pub health: f32,

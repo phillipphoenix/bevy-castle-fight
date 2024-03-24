@@ -1,7 +1,8 @@
 use crate::buildings::*;
 use crate::common_components::*;
+use crate::grid_traits::SnapToGrid;
 use crate::units::spawn_unit;
-use crate::waypoints::WaypointMap;
+use crate::waypoint_plugin::WaypointMap;
 use crate::MousePosition;
 use bevy::asset::AssetServer;
 use bevy::prelude::*;
@@ -38,11 +39,6 @@ fn unit_spawner_spawn_units(
         if unit_spawner.time_left > 0. {
             unit_spawner.time_left -= time.delta_seconds()
         } else {
-            let waypoint_id = match unit.team {
-                Team::TeamRed => "FirstRed",
-                Team::TeamBlue => "FirstBlue",
-            };
-
             spawn_unit(
                 &mut commands,
                 unit.team,
@@ -50,7 +46,6 @@ fn unit_spawner_spawn_units(
                 transform.translation.x,
                 transform.translation.y,
                 &waypoint_map,
-                Some(waypoint_id.to_string()),
             );
             unit_spawner.time_left = unit_spawner.spawn_time
         }
@@ -91,7 +86,9 @@ fn update_ghost_building_position(
     mouse_position: Res<MousePosition>,
 ) {
     if let Ok(mut ghost_transform) = query.get_single_mut() {
-        ghost_transform.translation = Vec3::new(mouse_position.x, mouse_position.y, 1.);
+        let z = ghost_transform.translation.z;
+        ghost_transform.translation =
+            Vec3::new(mouse_position.x, mouse_position.y, z).snap_to_grid(32.);
     }
 }
 
@@ -111,38 +108,42 @@ fn ghost_building_collision_system(
     mut collisions: EventReader<CollisionEvent>,
     mut ghost_query: Query<(Entity, &mut BuildingGhost, &mut Sprite)>,
     building_query: Query<Entity, With<Building>>,
+    parent_query: Query<&Parent>,
 ) {
+    let sort_entities = |entity1: &Entity, entity2: &Entity| -> Option<(Entity, Entity)> {
+        if ghost_query.get(*entity1).is_ok() {
+            let opt_building_entity = parent_query.get(*entity2);
+            if let Ok(building_entity) = opt_building_entity {
+                return Some((*entity1, building_entity.get()));
+            }
+        } else if ghost_query.get(*entity2).is_ok() {
+            let opt_building_entity = parent_query.get(*entity1);
+            if let Ok(building_entity) = opt_building_entity {
+                return Some((*entity2, building_entity.get()));
+            }
+        }
+        None
+    };
+
     // Contains ghosts and if their placement is valid.
     let mut ghost_collisions: HashMap<Entity, bool> = HashMap::new();
 
+    // TODO: Change this to add collided entities to a list and remove them. Then check if the list is empty or not for if placement is valid.
     for event in collisions.read() {
         match event {
             CollisionEvent::Started(entity1, entity2, _) => {
-                let (ghost, building) = if ghost_query.get(*entity1).is_ok() {
-                    (entity1, entity2)
-                } else if ghost_query.get(*entity2).is_ok() {
-                    (entity2, entity1)
-                } else {
-                    continue;
-                };
-
-                if building_query.get(*building).is_ok() {
-                    ghost_collisions.insert(*ghost, false);
+                if let Some((ghost_entity, other_entity)) = sort_entities(entity1, entity2) {
+                    info!("GHOST {:?} and OTHER {:?}", ghost_entity, other_entity);
+                    if building_query.get(other_entity).is_ok() {
+                        ghost_collisions.entry(ghost_entity).or_insert(false);
+                    }
                 }
             }
             CollisionEvent::Stopped(entity1, entity2, _) => {
-                let (ghost, building) = if ghost_query.get(*entity1).is_ok() {
-                    (entity1, entity2)
-                } else if ghost_query.get(*entity2).is_ok() {
-                    (entity2, entity1)
-                } else {
-                    continue;
-                };
-
-                if building_query.get(*building).is_ok() {
-                    // When collision stops, consider re-validating placement.
-                    // This might be too optimistic if there are multiple buildings overlapping.
-                    ghost_collisions.entry(*ghost).or_insert(true);
+                if let Some((ghost_entity, other_entity)) = sort_entities(entity1, entity2) {
+                    if building_query.get(other_entity).is_ok() {
+                        ghost_collisions.entry(ghost_entity).or_insert(true);
+                    }
                 }
             }
         }
@@ -153,9 +154,9 @@ fn ghost_building_collision_system(
         if let Ok((_, mut ghost_building, mut ghost_sprite)) = ghost_query.get_mut(*entity) {
             ghost_building.placement_valid = *placement_valid;
             ghost_sprite.color = if *placement_valid {
-                Color::rgba(0.5, 1.0, 0.5, 0.5)
+                Color::rgba(0.5, 1.0, 0.5, 0.7)
             } else {
-                Color::rgba(1.0, 0.5, 0.5, 0.5)
+                Color::rgba(1.0, 0.5, 0.5, 0.7)
             };
         }
     }

@@ -1,24 +1,26 @@
 mod building_plugin;
 mod buildings;
+mod camera_plugin;
 mod common_components;
+mod grid_traits;
+mod inspector_plugin;
 mod unit_plugin;
 mod units;
-mod waypoints;
+mod waypoint_plugin;
 
-use bevy::input::common_conditions::{input_just_pressed, input_toggle_active};
+use crate::camera_plugin::CameraPlugin;
+use crate::common_components::{Health, TeamEntity};
+use crate::inspector_plugin::InspectorPlugin;
+use bevy::input::common_conditions::input_just_pressed;
 use bevy::{
     prelude::*,
     render::{settings::WgpuSettings, RenderPlugin},
-    utils::HashMap,
 };
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
-
-use waypoints::*;
-
-use crate::common_components::{Health, TeamEntity};
 use building_plugin::BuildingPlugin;
 use unit_plugin::UnitPlugin;
+use waypoint_plugin::*;
 
 #[derive(Resource)]
 struct MousePosition {
@@ -36,19 +38,18 @@ fn main() {
                     backends: Some(bevy::render::settings::Backends::VULKAN),
                     ..Default::default()
                 }),
-                synchronous_pipeline_compilation: true,
+                synchronous_pipeline_compilation: false,
             }),
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
-            WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
+            InspectorPlugin,
         ))
-        .insert_resource(WaypointMap {
-            all_waypoints: HashMap::default(),
-        })
         .insert_resource(MousePosition { x: 0., y: 0. })
-        .add_plugins((UnitPlugin, BuildingPlugin))
-        .add_systems(Startup, add_camera)
-        .add_systems(Startup, add_waypoints)
+        .insert_resource(LevelSelection::index(0))
+        .add_plugins(CameraPlugin)
+        .add_plugins((WaypointPlugin, UnitPlugin, BuildingPlugin))
+        .add_plugins(LdtkPlugin)
+        .add_systems(Startup, setup)
         .add_systems(
             Update,
             toggle_pause.run_if(input_just_pressed(KeyCode::Space)),
@@ -66,8 +67,11 @@ fn toggle_pause(mut time: ResMut<Time<Virtual>>) {
     }
 }
 
-fn add_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(LdtkWorldBundle {
+        ldtk_handle: asset_server.load("maps/map-0.ldtk"),
+        ..Default::default()
+    });
 }
 
 /// Should run after attack_system.

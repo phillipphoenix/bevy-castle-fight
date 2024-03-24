@@ -27,7 +27,7 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
         },
         SpriteBundle {
             texture: sprite,
-            transform: Transform::from_xyz(x, y, 0.),
+            transform: Transform::from_xyz(x, y, 10.),
             ..Default::default()
         },
         UnitSpawner {
@@ -51,7 +51,7 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
     building_entity.with_children(|builder| {
         builder.spawn((
             Collider::cuboid(32.0, 32.0), // Actual collider matching sprite size.
-            CollisionGroups::new(Group::GROUP_1, Group::GROUP_2),
+            CollisionGroups::new(Group::GROUP_1, Group::GROUP_2 | Group::GROUP_3),
         ));
     });
 
@@ -87,17 +87,17 @@ pub fn spawn_ghost_building(
         },
         SpriteBundle {
             texture: sprite,
-            transform: Transform::from_xyz(x, y, 0.),
+            transform: Transform::from_xyz(x, y, 10.1),
             sprite: Sprite {
-                color: Color::rgba(0.5, 1.0, 0.5, 0.5),
+                color: Color::rgba(0.5, 1.0, 0.5, 0.7),
                 ..Default::default()
             },
             ..Default::default()
         },
-        Collider::cuboid(32.0, 32.0),
+        Collider::cuboid(31.0, 31.0),
         Sensor,
+        CollisionGroups::new(Group::GROUP_3, Group::GROUP_1),
         ActiveCollisionTypes::all(), // TODO: Optimize later.
-        // TODO: Set collision groups for further optimisation.
         ActiveEvents::COLLISION_EVENTS,
     ));
 }

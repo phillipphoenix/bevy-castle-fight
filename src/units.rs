@@ -1,5 +1,5 @@
 use crate::common_components::*;
-use crate::waypoints::{WaypointFollower, WaypointMap};
+use crate::waypoint_plugin::{WaypointFollower, WaypointMap};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -21,11 +21,11 @@ pub struct AttackStats {
 #[derive(Component)]
 pub struct OpponentFollower;
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct MoveTarget(pub Entity);
 
 /// One-time use points that are used to move to.
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct MoveToPoint(pub Vec2);
 
 pub fn spawn_unit(
@@ -35,7 +35,6 @@ pub fn spawn_unit(
     x: f32,
     y: f32,
     waypoint_map: &Res<WaypointMap>,
-    waypoint_id: Option<String>,
 ) {
     let mut unit_entity = commands.spawn((
         TeamEntity { team },
@@ -53,7 +52,7 @@ pub fn spawn_unit(
         },
         MovementSpeed(32. * 3.),
         SpriteBundle {
-            transform: Transform::from_xyz(x, y, 0.1),
+            transform: Transform::from_xyz(x, y, 10.),
             texture: sprite,
             ..Default::default()
         },
@@ -94,11 +93,9 @@ pub fn spawn_unit(
         });
     });
 
-    if let Some(ref waypoint_id_str) = waypoint_id {
-        let waypoint = waypoint_map.all_waypoints.get(waypoint_id_str).unwrap();
-
+    if let Some(start_waypoint) = waypoint_map.get_closest_start_waypoint(Vec2::new(x, y), team) {
         unit_entity.insert(WaypointFollower {
-            waypoint: *waypoint,
+            waypoint: start_waypoint,
         });
     }
 }
