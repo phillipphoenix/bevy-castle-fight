@@ -8,23 +8,78 @@ use bevy::asset::AssetServer;
 use bevy::prelude::*;
 use bevy::prelude::{Commands, Query, Res, Time, Transform};
 use bevy::utils::HashMap;
+use bevy_ecs_ldtk::app::LdtkEntityAppExt;
+use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::pipeline::CollisionEvent;
+use bevy_rapier2d::prelude::{
+    ActiveCollisionTypes, ActiveEvents, CollisionGroups, Group, RigidBody,
+};
 
 pub struct BuildingPlugin;
 
 impl Plugin for BuildingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                unit_spawner_spawn_units,
-                init_building,
-                update_ghost_building_position,
-                cancel_building,
-                ghost_building_collision_system,
-                building_placement,
-            ),
-        );
+        app.register_ldtk_entity::<CastleBundle>("Castle")
+            .add_systems(Update, process_castle)
+            .add_systems(
+                Update,
+                (
+                    unit_spawner_spawn_units,
+                    init_building,
+                    update_ghost_building_position,
+                    cancel_building,
+                    ghost_building_collision_system,
+                    building_placement,
+                ),
+            );
+    }
+}
+
+fn process_castle(
+    mut commands: Commands,
+    new_castles: Query<(Entity, &TeamEntity), Added<Castle>>,
+) {
+    for (entity, team_entity) in new_castles.iter() {
+        let mut castle = commands.entity(entity);
+        castle.insert((
+            RigidBody::KinematicPositionBased,
+            // Add below back, if building has attack and a vision range.
+            // Collider::cuboid(32.0 * 2, 32.0 * 2),
+            // Sensor,
+            CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
+            ActiveCollisionTypes::all(), // TODO: Optimize later.
+            ActiveEvents::COLLISION_EVENTS,
+        ));
+
+        let text_color = match team_entity.team {
+            Team::Gaia => Color::GRAY,
+            Team::TeamRed => Color::RED,
+            Team::TeamBlue => Color::BLUE,
+        };
+
+        castle.with_children(|builder| {
+            builder.spawn((
+                Collider::cuboid(96. / 2., 96. / 2.), // Actual collider matching sprite size.
+                CollisionGroups::new(Group::GROUP_1, Group::GROUP_2 | Group::GROUP_3),
+            ));
+        });
+
+        castle.with_children(|builder| {
+            builder.spawn(Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection::new(
+                        team_entity.team.to_string(),
+                        TextStyle {
+                            color: text_color,
+                            ..Default::default()
+                        },
+                    )],
+                    ..Default::default()
+                },
+                transform: Transform::from_translation(Vec3::new(0.0, -60.0, 1.0)),
+                ..Default::default()
+            });
+        });
     }
 }
 

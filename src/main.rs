@@ -77,7 +77,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// Should run after attack_system.
 fn check_death(mut commands: Commands, query: Query<(Entity, &Health), With<TeamEntity>>) {
     for (entity, health) in query.iter() {
-        if health.health <= 0. {
+        if health.health <= 0 {
             commands.entity(entity).despawn_recursive();
             info!("{:?} died as health was depleted!", entity);
         }

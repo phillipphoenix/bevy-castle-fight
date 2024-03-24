@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_ecs_ldtk::app::LdtkEntityAppExt;
 
 pub struct CameraPlugin;
 

@@ -4,8 +4,10 @@ use bevy_ecs_ldtk::EntityInstance;
 use std::fmt;
 use std::fmt::Formatter;
 
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Reflect, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Reflect, Hash, Default)]
 pub enum Team {
+    #[default]
+    Gaia,
     TeamRed,
     TeamBlue,
 }
@@ -13,13 +15,14 @@ pub enum Team {
 impl fmt::Display for Team {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
+            Team::Gaia => write!(f, "GAIA"),
             Team::TeamRed => write!(f, "RED"),
             Team::TeamBlue => write!(f, "BLUE"),
         }
     }
 }
 
-#[derive(Component, Debug, Reflect)]
+#[derive(Default, Component, Debug, Reflect)]
 pub struct TeamEntity {
     pub team: Team,
 }
@@ -41,10 +44,22 @@ impl TeamEntity {
     }
 }
 
-#[derive(Component, Debug, Reflect)]
+#[derive(Default, Component, Debug, Reflect)]
 pub struct Health {
-    pub max_health: f32,
-    pub health: f32,
+    pub max_health: i32,
+    pub health: i32,
+}
+
+impl Health {
+    pub fn from_field(entity_instance: &EntityInstance) -> Health {
+        let health = entity_instance
+            .get_int_field("health")
+            .expect("This entity should have a health field.");
+        Health {
+            health: *health,
+            max_health: *health,
+        }
+    }
 }
 
 /// From how far away can an entity spot for instance opponents.

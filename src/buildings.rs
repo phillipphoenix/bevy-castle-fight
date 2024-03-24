@@ -1,9 +1,13 @@
 use crate::common_components::*;
 use bevy::prelude::*;
+use bevy_ecs_ldtk::LdtkEntity;
 use bevy_rapier2d::prelude::*;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Building;
+
+#[derive(Component, Default)]
+pub struct Castle;
 
 #[derive(Component)]
 pub struct BuildingGhost {
@@ -17,13 +21,25 @@ pub struct UnitSpawner {
     pub time_left: f32,
 }
 
+#[derive(Default, Bundle, LdtkEntity)]
+pub struct CastleBundle {
+    castle: Castle,
+    building: Building,
+    #[sprite_bundle]
+    sprite_bundle: SpriteBundle,
+    #[with(TeamEntity::from_field)]
+    team_entity: TeamEntity,
+    #[with(Health::from_field)]
+    health: Health,
+}
+
 pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprite: Handle<Image>) {
     let mut building_entity = commands.spawn((
         TeamEntity { team },
         Building,
         Health {
-            health: 10.,
-            max_health: 10.,
+            health: 10,
+            max_health: 10,
         },
         SpriteBundle {
             texture: sprite,
@@ -44,6 +60,7 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
     ));
 
     let text_color = match team {
+        Team::Gaia => Color::GRAY,
         Team::TeamRed => Color::RED,
         Team::TeamBlue => Color::BLUE,
     };

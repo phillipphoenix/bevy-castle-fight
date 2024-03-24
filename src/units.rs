@@ -11,7 +11,7 @@ pub struct MovementSpeed(pub f32);
 
 #[derive(Component, Debug)]
 pub struct AttackStats {
-    pub damage: f32,
+    pub damage: i32,
     pub attack_speed: f32,
     /// Used to check if the attack target is within striking range.
     pub attack_range: f32,
@@ -41,13 +41,13 @@ pub fn spawn_unit(
         Unit,
         OpponentFollower,
         Health {
-            health: 5.,
-            max_health: 5.,
+            health: 5,
+            max_health: 5,
         },
         AttackStats {
             attack_speed: 2.,
             attack_range: 16. + 32. * 0., // Melee.
-            damage: 1.,
+            damage: 1,
             time_till_next_attack: 0.,
         },
         MovementSpeed(32. * 3.),
@@ -65,6 +65,7 @@ pub fn spawn_unit(
     ));
 
     let text_color = match team {
+        Team::Gaia => Color::GRAY,
         Team::TeamRed => Color::RED,
         Team::TeamBlue => Color::BLUE,
     };
