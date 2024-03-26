@@ -23,7 +23,6 @@ fn init_camera(mut commands: Commands) {
 }
 
 fn move_camera(
-    mouse_input: Res<ButtonInput<MouseButton>>,
     key_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<MainCamera>>,
     time: Res<Time<Real>>,

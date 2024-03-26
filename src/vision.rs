@@ -26,6 +26,7 @@ pub struct VisionRange(f32);
 
 /// Check if a sensor collider detects another unit.
 /// If it does detect a unit, and it is from another team, set that as the attack target.
+#[allow(clippy::type_complexity)]
 fn vision_detect_target(
     mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
