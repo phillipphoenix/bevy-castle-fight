@@ -1,6 +1,7 @@
-use crate::common_components::{Health, TeamEntity};
-use crate::units::{MoveTarget, MoveToPoint};
-use crate::waypoint_plugin::{IsStartPoint, Waypoint};
+use crate::health::Health;
+use crate::movement::{MoveTarget, MoveToPoint};
+use crate::teams::TeamEntity;
+use crate::waypoints::{IsStartPoint, Waypoint};
 use bevy::app::{App, Plugin};
 use bevy::input::common_conditions::input_toggle_active;
 use bevy::prelude::KeyCode;

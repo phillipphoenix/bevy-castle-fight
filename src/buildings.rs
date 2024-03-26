@@ -1,7 +1,10 @@
-use crate::common_components::*;
+use crate::health::Health;
+use crate::teams::{Team, TeamEntity};
+use crate::unit_spawning::UnitSpawner;
 use bevy::prelude::*;
-use bevy_ecs_ldtk::LdtkEntity;
 use bevy_rapier2d::prelude::*;
+
+// --- Components ---
 
 #[derive(Component, Default)]
 pub struct Building;
@@ -15,24 +18,9 @@ pub struct BuildingGhost {
     pub team: Team,
 }
 
-#[derive(Component)]
-pub struct UnitSpawner {
-    pub spawn_time: f32,
-    pub time_left: f32,
-}
+// --- Helper functions ---
 
-#[derive(Default, Bundle, LdtkEntity)]
-pub struct CastleBundle {
-    castle: Castle,
-    building: Building,
-    #[sprite_bundle]
-    sprite_bundle: SpriteBundle,
-    #[with(TeamEntity::from_field)]
-    team_entity: TeamEntity,
-    #[with(Health::from_field)]
-    health: Health,
-}
-
+/// Helper function to spawn a building. This is not a system.
 pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprite: Handle<Image>) {
     let mut building_entity = commands.spawn((
         TeamEntity { team },
@@ -59,11 +47,7 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
         ActiveEvents::COLLISION_EVENTS,
     ));
 
-    let text_color = match team {
-        Team::Gaia => Color::GRAY,
-        Team::TeamRed => Color::RED,
-        Team::TeamBlue => Color::BLUE,
-    };
+    let text_color = team.get_color();
 
     building_entity.with_children(|builder| {
         builder.spawn((
@@ -90,6 +74,7 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
     });
 }
 
+/// Helper function to spawn a ghost building (for building new buildings). This is not a function.
 pub fn spawn_ghost_building(
     commands: &mut Commands,
     team: Team,

@@ -1,113 +1,33 @@
-use crate::buildings::*;
-use crate::common_components::*;
+use crate::buildings::{spawn_building, spawn_ghost_building, Building, BuildingGhost};
 use crate::grid_traits::SnapToGrid;
-use crate::units::spawn_unit;
-use crate::waypoint_plugin::WaypointMap;
-use crate::MousePosition;
-use bevy::asset::AssetServer;
+use crate::resources::MousePosition;
+use crate::teams::Team;
 use bevy::prelude::*;
-use bevy::prelude::{Commands, Query, Res, Time, Transform};
 use bevy::utils::HashMap;
-use bevy_ecs_ldtk::app::LdtkEntityAppExt;
-use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::pipeline::CollisionEvent;
-use bevy_rapier2d::prelude::{
-    ActiveCollisionTypes, ActiveEvents, CollisionGroups, Group, RigidBody,
-};
 
-pub struct BuildingPlugin;
+// --- Plugin ---
 
-impl Plugin for BuildingPlugin {
+pub struct BuildingSpawningPlugin;
+
+impl Plugin for BuildingSpawningPlugin {
     fn build(&self, app: &mut App) {
-        app.register_ldtk_entity::<CastleBundle>("Castle")
-            .add_systems(Update, process_castle)
-            .add_systems(
-                Update,
-                (
-                    unit_spawner_spawn_units,
-                    init_building,
-                    update_ghost_building_position,
-                    cancel_building,
-                    ghost_building_collision_system,
-                    building_placement,
-                ),
-            );
+        app.add_systems(
+            Update,
+            (
+                test_init_build_building,
+                update_ghost_building_position,
+                cancel_building,
+                ghost_building_collision_system,
+                building_placement,
+            ),
+        );
     }
 }
 
-fn process_castle(
-    mut commands: Commands,
-    new_castles: Query<(Entity, &TeamEntity), Added<Castle>>,
-) {
-    for (entity, team_entity) in new_castles.iter() {
-        let mut castle = commands.entity(entity);
-        castle.insert((
-            RigidBody::KinematicPositionBased,
-            // Add below back, if building has attack and a vision range.
-            // Collider::cuboid(32.0 * 2, 32.0 * 2),
-            // Sensor,
-            CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
-            ActiveCollisionTypes::all(), // TODO: Optimize later.
-            ActiveEvents::COLLISION_EVENTS,
-        ));
+// --- Systems ---
 
-        let text_color = match team_entity.team {
-            Team::Gaia => Color::GRAY,
-            Team::TeamRed => Color::RED,
-            Team::TeamBlue => Color::BLUE,
-        };
-
-        castle.with_children(|builder| {
-            builder.spawn((
-                Collider::cuboid(96. / 2., 96. / 2.), // Actual collider matching sprite size.
-                CollisionGroups::new(Group::GROUP_1, Group::GROUP_2 | Group::GROUP_3),
-            ));
-        });
-
-        castle.with_children(|builder| {
-            builder.spawn(Text2dBundle {
-                text: Text {
-                    sections: vec![TextSection::new(
-                        team_entity.team.to_string(),
-                        TextStyle {
-                            color: text_color,
-                            ..Default::default()
-                        },
-                    )],
-                    ..Default::default()
-                },
-                transform: Transform::from_translation(Vec3::new(0.0, -60.0, 1.0)),
-                ..Default::default()
-            });
-        });
-    }
-}
-
-fn unit_spawner_spawn_units(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    waypoint_map: Res<WaypointMap>,
-    time: Res<Time>,
-    mut query: Query<(&mut UnitSpawner, &Transform, &TeamEntity)>,
-) {
-    for (mut unit_spawner, transform, unit) in query.iter_mut() {
-        if unit_spawner.time_left > 0. {
-            unit_spawner.time_left -= time.delta_seconds()
-        } else {
-            spawn_unit(
-                &mut commands,
-                unit.team,
-                asset_server.load("prototype-unit.png"),
-                transform.translation.x,
-                transform.translation.y,
-                &waypoint_map,
-            );
-            unit_spawner.time_left = unit_spawner.spawn_time
-        }
-    }
-}
-
-fn init_building(
+fn test_init_build_building(
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     asset_server: Res<AssetServer>,
@@ -118,7 +38,7 @@ fn init_building(
         let building_sprite = asset_server.load("prototype-building.png");
         spawn_ghost_building(
             &mut commands,
-            Team::TeamRed,
+            Team::Red,
             mouse_position.x,
             mouse_position.y,
             building_sprite,
@@ -128,7 +48,7 @@ fn init_building(
         let building_sprite = asset_server.load("prototype-building.png");
         spawn_ghost_building(
             &mut commands,
-            Team::TeamBlue,
+            Team::Blue,
             mouse_position.x,
             mouse_position.y,
             building_sprite,
