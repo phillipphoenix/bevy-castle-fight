@@ -19,6 +19,7 @@ impl Plugin for VisionPlugin {
 // --- Components ---
 
 /// From how far away can an entity spot for instance opponents.
+#[allow(dead_code)]
 #[derive(Component)]
 pub struct VisionRange(f32);
 
