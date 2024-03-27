@@ -1,5 +1,9 @@
 use bevy::prelude::{Vec2, Vec3};
 
+/*
+Contains helper functions related to grids, for instance snapping to the grid.
+*/
+
 // Define a trait for snapping to grid functionality
 pub trait SnapToGrid {
     fn snap_to_grid(self, grid_size: f32) -> Self;

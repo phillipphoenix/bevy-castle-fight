@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use bevy_ecs_ldtk::app::LdtkEntityAppExt;
+
+// --- Plugin ---
 
 pub struct CameraPlugin;
 
@@ -10,15 +11,18 @@ impl Plugin for CameraPlugin {
     }
 }
 
+// --- Components ---
+
 #[derive(Component)]
 struct MainCamera;
+
+// --- Systems ---
 
 fn init_camera(mut commands: Commands) {
     commands.spawn((Camera2dBundle::default(), MainCamera));
 }
 
 fn move_camera(
-    mouse_input: Res<ButtonInput<MouseButton>>,
     key_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<MainCamera>>,
     time: Res<Time<Real>>,

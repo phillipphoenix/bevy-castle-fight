@@ -1,33 +1,18 @@
-use crate::common_components::*;
-use crate::waypoint_plugin::{WaypointFollower, WaypointMap};
+use crate::attack::AttackStats;
+use crate::health::Health;
+use crate::movement::{MovementSpeed, OpponentFollower, WaypointFollower};
+use crate::teams::{Team, TeamEntity};
+use crate::waypoints::WaypointMap;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+// --- Components ---
 #[derive(Component)]
 struct Unit;
 
-#[derive(Component)]
-pub struct MovementSpeed(pub f32);
+// --- Helper functions ---
 
-#[derive(Component, Debug)]
-pub struct AttackStats {
-    pub damage: i32,
-    pub attack_speed: f32,
-    /// Used to check if the attack target is within striking range.
-    pub attack_range: f32,
-    pub time_till_next_attack: f32,
-}
-
-#[derive(Component)]
-pub struct OpponentFollower;
-
-#[derive(Component, Reflect)]
-pub struct MoveTarget(pub Entity);
-
-/// One-time use points that are used to move to.
-#[derive(Component, Reflect)]
-pub struct MoveToPoint(pub Vec2);
-
+/// Function to help spawn a unit.
 pub fn spawn_unit(
     commands: &mut Commands,
     team: Team,
@@ -64,11 +49,7 @@ pub fn spawn_unit(
         ActiveEvents::COLLISION_EVENTS,
     ));
 
-    let text_color = match team {
-        Team::Gaia => Color::GRAY,
-        Team::TeamRed => Color::RED,
-        Team::TeamBlue => Color::BLUE,
-    };
+    let text_color = team.get_color();
 
     unit_entity.with_children(|builder| {
         builder.spawn((
@@ -100,3 +81,5 @@ pub fn spawn_unit(
         });
     }
 }
+
+// --- Systems ---
