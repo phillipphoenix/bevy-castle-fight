@@ -1,4 +1,4 @@
-use crate::teams::TeamEntity;
+use crate::teams::Team;
 use bevy::prelude::PostUpdate;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::LdtkFields;
@@ -37,7 +37,7 @@ impl Health {
 // --- Systems ---
 
 /// Should run after attack_system.
-fn check_death(mut commands: Commands, query: Query<(Entity, &Health), With<TeamEntity>>) {
+fn check_death(mut commands: Commands, query: Query<(Entity, &Health), With<Team>>) {
     for (entity, health) in query.iter() {
         if health.health <= 0 {
             commands.entity(entity).despawn_recursive();

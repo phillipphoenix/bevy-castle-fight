@@ -6,7 +6,7 @@ use std::fmt::Formatter;
 
 // --- Enums ---
 
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Reflect, Hash, Default)]
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Reflect, Hash, Default, Component)]
 pub enum Team {
     #[default]
     Gaia,
@@ -32,29 +32,44 @@ impl Team {
             Team::Blue => Color::BLUE,
         }
     }
+
+    pub fn from_field(entity_instance: &EntityInstance) -> Team {
+        let team_field = entity_instance
+            .get_enum_field("team")
+            .expect("Team enum wasn't found on the LDTK entity...");
+
+        match team_field.as_str() {
+            "GAIA" => Team::Gaia,
+            "RED" => Team::Red,
+            "BLUE" => Team::Blue,
+            _ => {
+                panic!("Team {:?} doesn't exist!", team_field);
+            }
+        }
+    }
 }
 
 // --- Components ---
 
-#[derive(Default, Component, Debug, Reflect)]
-pub struct TeamEntity {
-    pub team: Team,
-}
+/// Team association is used, when an entity is not directly part of a team (for instance waypoints),
+/// but is associated with a team. This allows systems to make
+/// a distinction between active team members and associated entities.
+#[derive(Component, Reflect)]
+pub struct TeamAssociation(pub Team);
 
-impl TeamEntity {
-    pub fn from_field(entity_instance: &EntityInstance) -> TeamEntity {
+impl TeamAssociation {
+    pub fn from_field(entity_instance: &EntityInstance) -> TeamAssociation {
         let team_field = entity_instance
             .get_enum_field("team")
             .expect("Team enum wasn't found on the LDTK entity...");
-        TeamEntity {
-            team: match team_field.as_str() {
-                "GAIA" => Team::Gaia,
-                "RED" => Team::Red,
-                "BLUE" => Team::Blue,
-                _ => {
-                    panic!("Team {:?} doesn't exist!", team_field);
-                }
-            },
-        }
+
+        TeamAssociation(match team_field.as_str() {
+            "GAIA" => Team::Gaia,
+            "RED" => Team::Red,
+            "BLUE" => Team::Blue,
+            _ => {
+                panic!("Team {:?} doesn't exist!", team_field);
+            }
+        })
     }
 }

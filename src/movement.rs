@@ -28,7 +28,7 @@ pub struct MovementSpeed(pub f32);
 #[derive(Component)]
 pub struct OpponentFollower;
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct WaypointFollower {
     pub waypoint: Entity,
 }
@@ -54,7 +54,7 @@ fn move_towards_point(
         // Move towards the target.
         let move_direction = direction.normalize();
         let move_amount = (move_direction.xy() * movement_speed.0 * time.delta_seconds())
-            .clamp_length_max(direction.length())
+            // .clamp_length_max(direction.length())
             .extend(0.);
         transform.translation += move_amount;
         // Remove the move to point.
@@ -107,7 +107,7 @@ fn sync_waypoint_move_target(
                         let direction = waypoint_transform.translation - transform.translation;
                         let distance = direction.length();
 
-                        if distance < 32.0 {
+                        if distance < 64.0 {
                             // Check if there is a next waypoint.
                             if let Some(next_waypoint) = waypoint.next_waypoint {
                                 waypoint_follower.waypoint = next_waypoint;
