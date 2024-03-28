@@ -1,10 +1,39 @@
-# Bevy Template
+# Bevy Castle Fight
 
-This template comes with an empty Bevy project along with Github Actions for CI and release.
+This game takes inspiration from the Warcraft III Custom Map called Castle Fight.
+The basics of the game are that players place buildings that auto-spawn units.
 
-On each push to the main branch or for each pull request created towards the main branch, the project is build and tested.
+The units will move towards the enemy base, which they will try to destroy.
+They will fight enemy units they encounter along the way.
 
-Creating a release in Github will start the release pipelines, which can create builds for Windows, Mac, Linux and WaSM (Web), which are uploaded to the Github release. It can also be set up to deploy directly to itch.io, if wanted.
+Each team tries to build the correct units in order to overcome their enemies' forces.
+
+## Setting up the code base
+
+### Requirements
+
+- Rust
+- Git & Git LFS
+- LDtk (optional) - For creating and altering maps
+
+### Setup
+
+- Install Rust, Git and Git LFS before cloning the repository.
+- Clone the repository and initialise Git LFS in the repo folder.
+- Run the command `cargo run` to check that everything works.
+
+### Problems
+
+#### Problems with Git LFS or missing files
+
+If encountering problems with missing files like PNG files or errors during cloning or pulling the repo
+you can try and use Github Desktop (or another git client), which might help with correct Git LFS setup.
+
+## External tools
+
+### LDtk
+
+LDtk is a free and open-source 2D level editor. In this project we use it to create maps, setting up entities and more. 
 
 ## Notes about the pipelines
 
