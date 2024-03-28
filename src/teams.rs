@@ -48,3 +48,28 @@ impl Team {
         }
     }
 }
+
+// --- Components ---
+
+/// Team association is used, when an entity is not directly part of a team (for instance waypoints),
+/// but is associated with a team. This allows systems to make
+/// a distinction between active team members and associated entities.
+#[derive(Component, Reflect)]
+pub struct TeamAssociation(pub Team);
+
+impl TeamAssociation {
+    pub fn from_field(entity_instance: &EntityInstance) -> TeamAssociation {
+        let team_field = entity_instance
+            .get_enum_field("team")
+            .expect("Team enum wasn't found on the LDTK entity...");
+
+        TeamAssociation(match team_field.as_str() {
+            "GAIA" => Team::Gaia,
+            "RED" => Team::Red,
+            "BLUE" => Team::Blue,
+            _ => {
+                panic!("Team {:?} doesn't exist!", team_field);
+            }
+        })
+    }
+}

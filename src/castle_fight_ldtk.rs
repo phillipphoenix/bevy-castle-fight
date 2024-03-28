@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::buildings::{Building, Castle};
 use crate::health::Health;
-use crate::teams::Team;
+use crate::teams::{Team, TeamAssociation};
 use crate::waypoints::{IsStartPoint, Waypoint};
 
 /*
@@ -42,8 +42,8 @@ pub struct CastleBundle {
 struct WaypointBundle {
     #[sprite_bundle]
     sprite_bundle: SpriteBundle,
-    #[with(Team::from_field)]
-    team: Team,
+    #[with(TeamAssociation::from_field)]
+    team_association: TeamAssociation,
     #[with(UnresolvedNextWaypointRef::from_field)]
     unresolved_next_waypoint: UnresolvedNextWaypointRef,
     #[with(IsStartPoint::from_field)]
