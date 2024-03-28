@@ -1,4 +1,4 @@
-use crate::teams::{Team, TeamEntity};
+use crate::teams::Team;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_ldtk::prelude::*;
@@ -61,13 +61,13 @@ impl IsStartPoint {
 }
 
 fn add_start_waypoints_to_resources(
-    query: Query<(Entity, &TeamEntity, &Transform), Added<Waypoint>>,
+    query: Query<(Entity, &Team, &Transform), Added<Waypoint>>,
     mut waypoint_map: ResMut<WaypointMap>,
 ) {
-    for (new_entity, team_entity, transform) in query.iter() {
+    for (new_entity, team, transform) in query.iter() {
         let team_waypoint_list = waypoint_map
             .start_point_waypoints
-            .entry(team_entity.team)
+            .entry(*team)
             .or_insert(Vec::new());
         team_waypoint_list.push((new_entity, transform.translation.xy()));
     }

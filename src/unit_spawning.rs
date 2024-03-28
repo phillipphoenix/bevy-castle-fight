@@ -1,4 +1,4 @@
-use crate::teams::TeamEntity;
+use crate::teams::Team;
 use crate::units::spawn_unit;
 use crate::waypoints::WaypointMap;
 use bevy::prelude::*;
@@ -28,15 +28,15 @@ fn unit_spawner_spawn_units(
     asset_server: Res<AssetServer>,
     waypoint_map: Res<WaypointMap>,
     time: Res<Time>,
-    mut query: Query<(&mut UnitSpawner, &Transform, &TeamEntity)>,
+    mut query: Query<(&mut UnitSpawner, &Transform, &Team)>,
 ) {
-    for (mut unit_spawner, transform, unit) in query.iter_mut() {
+    for (mut unit_spawner, transform, team) in query.iter_mut() {
         if unit_spawner.time_left > 0. {
             unit_spawner.time_left -= time.delta_seconds()
         } else {
             spawn_unit(
                 &mut commands,
-                unit.team,
+                *team,
                 asset_server.load("prototype-unit.png"),
                 transform.translation.x,
                 transform.translation.y,

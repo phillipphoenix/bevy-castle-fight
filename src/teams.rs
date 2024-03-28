@@ -6,7 +6,7 @@ use std::fmt::Formatter;
 
 // --- Enums ---
 
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Reflect, Hash, Default)]
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Reflect, Hash, Default, Component)]
 pub enum Team {
     #[default]
     Gaia,
@@ -32,29 +32,19 @@ impl Team {
             Team::Blue => Color::BLUE,
         }
     }
-}
 
-// --- Components ---
-
-#[derive(Default, Component, Debug, Reflect)]
-pub struct TeamEntity {
-    pub team: Team,
-}
-
-impl TeamEntity {
-    pub fn from_field(entity_instance: &EntityInstance) -> TeamEntity {
+    pub fn from_field(entity_instance: &EntityInstance) -> Team {
         let team_field = entity_instance
             .get_enum_field("team")
             .expect("Team enum wasn't found on the LDTK entity...");
-        TeamEntity {
-            team: match team_field.as_str() {
-                "GAIA" => Team::Gaia,
-                "RED" => Team::Red,
-                "BLUE" => Team::Blue,
-                _ => {
-                    panic!("Team {:?} doesn't exist!", team_field);
-                }
-            },
+
+        match team_field.as_str() {
+            "GAIA" => Team::Gaia,
+            "RED" => Team::Red,
+            "BLUE" => Team::Blue,
+            _ => {
+                panic!("Team {:?} doesn't exist!", team_field);
+            }
         }
     }
 }

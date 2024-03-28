@@ -1,7 +1,7 @@
 use crate::attack::{AttackStats, AttackTarget};
 use crate::health::Health;
 use crate::movement::MoveTarget;
-use crate::teams::TeamEntity;
+use crate::teams::Team;
 use bevy::prelude::*;
 use bevy_rapier2d::geometry::Sensor;
 use bevy_rapier2d::pipeline::CollisionEvent;
@@ -31,8 +31,8 @@ pub struct VisionRange(f32);
 fn vision_detect_target(
     mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
-    attack_query: Query<(Entity, &TeamEntity), (With<AttackStats>, Without<AttackTarget>)>,
-    defend_query: Query<(Entity, &TeamEntity), With<Health>>,
+    attack_query: Query<(Entity, &Team), (With<AttackStats>, Without<AttackTarget>)>,
+    defend_query: Query<(Entity, &Team), With<Health>>,
     attack_target_query: Query<(Entity, &AttackTarget, Option<&MoveTarget>)>,
     sensor_query: Query<&Sensor>,
     parent_query: Query<&Parent>,
@@ -55,7 +55,7 @@ fn vision_detect_target(
     let check_set_target = |entity1: &Entity, entity2: &Entity, commands: &mut Commands| {
         if let Ok((attacker_entity, attacker_team)) = attack_query.get(*entity1) {
             if let Ok((defender_entity, defender_team)) = defend_query.get(*entity2) {
-                if attacker_team.team != defender_team.team {
+                if attacker_team != defender_team {
                     commands
                         .entity(attacker_entity)
                         .insert(AttackTarget(defender_entity));

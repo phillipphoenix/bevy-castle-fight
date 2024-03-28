@@ -1,7 +1,7 @@
 use crate::attack::AttackStats;
 use crate::health::Health;
 use crate::movement::{MovementSpeed, OpponentFollower, WaypointFollower};
-use crate::teams::{Team, TeamEntity};
+use crate::teams::Team;
 use crate::waypoints::WaypointMap;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -22,7 +22,7 @@ pub fn spawn_unit(
     waypoint_map: &Res<WaypointMap>,
 ) {
     let mut unit_entity = commands.spawn((
-        TeamEntity { team },
+        team,
         Unit,
         OpponentFollower,
         Health {
