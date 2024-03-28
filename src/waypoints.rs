@@ -20,12 +20,11 @@ impl Plugin for WaypointPlugin {
 
 #[derive(Component, Reflect)]
 pub struct Waypoint {
-    pub id: Option<String>,
     pub next_waypoint: Option<Entity>,
 }
 
 /// The waypoint map is used to find the closest starting waypoint for each team.
-#[derive(Resource)]
+#[derive(Resource, Reflect, Default)]
 pub struct WaypointMap {
     pub start_point_waypoints: HashMap<Team, Vec<(Entity, Vec2)>>,
 }
@@ -61,10 +60,14 @@ impl IsStartPoint {
 }
 
 fn add_start_waypoints_to_resources(
-    query: Query<(Entity, &Team, &Transform), Added<Waypoint>>,
+    query: Query<(Entity, &Team, &Transform, &IsStartPoint), Added<Waypoint>>,
     mut waypoint_map: ResMut<WaypointMap>,
 ) {
-    for (new_entity, team, transform) in query.iter() {
+    for (new_entity, team, transform, is_starting_point) in query.iter() {
+        if !is_starting_point.0 {
+            continue;
+        }
+
         let team_waypoint_list = waypoint_map
             .start_point_waypoints
             .entry(*team)

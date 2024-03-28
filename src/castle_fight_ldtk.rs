@@ -88,7 +88,6 @@ fn resolve_next_waypoint_references(
                 .entity(entity)
                 .remove::<UnresolvedNextWaypointRef>()
                 .insert(Waypoint {
-                    id: None,
                     next_waypoint: Some(next_wp_entity),
                 });
         } else {
@@ -98,7 +97,6 @@ fn resolve_next_waypoint_references(
                 .entity(entity)
                 .remove::<UnresolvedNextWaypointRef>()
                 .insert(Waypoint {
-                    id: None,
                     next_waypoint: None,
                 });
         }

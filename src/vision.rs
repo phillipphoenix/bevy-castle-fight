@@ -1,10 +1,11 @@
-use crate::attack::{AttackStats, AttackTarget};
-use crate::health::Health;
-use crate::movement::MoveTarget;
-use crate::teams::Team;
+use std::time::Duration;
+
 use bevy::prelude::*;
-use bevy_rapier2d::geometry::Sensor;
-use bevy_rapier2d::pipeline::CollisionEvent;
+use bevy::time::common_conditions::on_timer;
+use bevy_spatial::kdtree::KDTree2;
+use bevy_spatial::{AutomaticUpdate, SpatialAccess, SpatialStructure, TransformMode};
+
+use crate::teams::Team;
 
 // --- Plugin ---
 
@@ -12,87 +13,61 @@ pub struct VisionPlugin;
 
 impl Plugin for VisionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, vision_detect_target);
+        app.add_plugins(
+            AutomaticUpdate::<Team>::new()
+                .with_spatial_ds(SpatialStructure::KDTree2)
+                .with_frequency(Duration::from_millis(200))
+                .with_transform(TransformMode::GlobalTransform),
+        )
+        .add_systems(
+            Update,
+            check_vision.run_if(on_timer(Duration::from_millis(200))),
+        );
     }
 }
+
+// --- Types ---
+
+// type alias for easier usage later
+type TeamEntityTree = KDTree2<Team>;
 
 // --- Components ---
 
 /// From how far away can an entity spot for instance opponents.
-#[allow(dead_code)]
+#[derive(Component, Reflect)]
+pub struct VisionRange(pub f32);
+
 #[derive(Component)]
-pub struct VisionRange(f32);
+pub struct Visible;
+
+#[derive(Component, Reflect)]
+pub struct InVision {
+    pub friendlies: Vec<Entity>,
+    pub enemies: Vec<Entity>,
+}
 
 // --- Systems ---
 
-/// Check if a sensor collider detects another unit.
-/// If it does detect a unit, and it is from another team, set that as the attack target.
-#[allow(clippy::type_complexity)]
-fn vision_detect_target(
-    mut commands: Commands,
-    mut collisions: EventReader<CollisionEvent>,
-    attack_query: Query<(Entity, &Team), (With<AttackStats>, Without<AttackTarget>)>,
-    defend_query: Query<(Entity, &Team), With<Health>>,
-    attack_target_query: Query<(Entity, &AttackTarget, Option<&MoveTarget>)>,
-    sensor_query: Query<&Sensor>,
-    parent_query: Query<&Parent>,
+fn check_vision(
+    team_entity_tree: Res<TeamEntityTree>,
+    mut query: Query<(&Transform, &Team, &VisionRange, &mut InVision)>,
+    other_query: Query<(&Team, Option<&Visible>)>,
 ) {
-    let sort_entities = |entity1: &Entity, entity2: &Entity| -> Option<(Entity, Entity)> {
-        if sensor_query.get(*entity1).is_ok() {
-            let opt_rigid_body_entity = parent_query.get(*entity2);
-            if let Ok(seen_entity) = opt_rigid_body_entity {
-                return Some((*entity1, seen_entity.get()));
-            }
-        } else if sensor_query.get(*entity2).is_ok() {
-            let opt_rigid_body_entity = parent_query.get(*entity1);
-            if let Ok(seen_entity) = opt_rigid_body_entity {
-                return Some((*entity2, seen_entity.get()));
-            }
-        }
-        None
-    };
+    for (transform, team, vision_range, mut in_vision) in query.iter_mut() {
+        in_vision.friendlies.clear();
+        in_vision.enemies.clear();
 
-    let check_set_target = |entity1: &Entity, entity2: &Entity, commands: &mut Commands| {
-        if let Ok((attacker_entity, attacker_team)) = attack_query.get(*entity1) {
-            if let Ok((defender_entity, defender_team)) = defend_query.get(*entity2) {
-                if attacker_team != defender_team {
-                    commands
-                        .entity(attacker_entity)
-                        .insert(AttackTarget(defender_entity));
-                }
-            } else {
-                info!("Defender not found...");
-            }
-        } else {
-            info!("Attacker not found...")
-        }
-    };
-
-    let check_remove_target = |entity1: &Entity, entity2: &Entity, commands: &mut Commands| {
-        if let Ok((attacker_entity, target, opt_move_target)) = attack_target_query.get(*entity1) {
-            if target.0 == *entity2 {
-                commands.entity(attacker_entity).remove::<AttackTarget>();
-                // If the unit is also moving towards the attack target, remove the move target too.
-                if let Some(move_target) = opt_move_target {
-                    if move_target.0 == *entity2 {
-                        commands.entity(attacker_entity).remove::<MoveTarget>();
+        for (_, opt_entity) in
+            team_entity_tree.within_distance(transform.translation.xy(), vision_range.0)
+        {
+            if let Some(entity) = opt_entity {
+                if let Ok((other_team, opt_other_visible)) = other_query.get(entity) {
+                    if team == other_team {
+                        in_vision.friendlies.push(entity);
+                    } else if opt_other_visible.is_some() {
+                        // Only add enemy, if it is visible.
+                        in_vision.enemies.push(entity);
                     }
-                }
-            }
-        }
-    };
-
-    for collision in collisions.read() {
-        match collision {
-            CollisionEvent::Started(entity1, entity2, _) => {
-                if let Some((viewer, seen_entity)) = sort_entities(entity1, entity2) {
-                    info!("Viewer: {:?} has seen: {:?}", viewer, seen_entity);
-                    check_set_target(&viewer, &seen_entity, &mut commands);
-                }
-            }
-            CollisionEvent::Stopped(entity1, entity2, _) => {
-                if let Some((viewer, seen_entity)) = sort_entities(entity1, entity2) {
-                    check_remove_target(&viewer, &seen_entity, &mut commands);
                 }
             }
         }
