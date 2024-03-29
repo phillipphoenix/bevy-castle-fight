@@ -1,8 +1,8 @@
-use crate::health::Health;
-use crate::movement::{MoveTarget, MoveToPoint, WaypointFollower};
-use crate::teams::Team;
-use crate::vision::{InVision, VisionRange};
-use crate::waypoints::{IsStartPoint, Waypoint, WaypointMap};
+use crate::game::health::Health;
+use crate::game::movement::{MoveTarget, MoveToPoint, WaypointFollower};
+use crate::game::teams::Team;
+use crate::game::vision::{InVision, VisionRange};
+use crate::game::waypoints::{IsStartPoint, Waypoint, WaypointMap};
 use bevy::app::{App, Plugin};
 use bevy::input::common_conditions::input_toggle_active;
 use bevy::prelude::KeyCode;

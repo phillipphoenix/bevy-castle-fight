@@ -4,19 +4,15 @@ use bevy::{
     render::{settings::WgpuSettings, RenderPlugin},
 };
 use bevy_ecs_ldtk::prelude::*;
-use bevy_rapier2d::prelude::*;
 
-use bevy_castle_fight::attack::AttackPlugin;
-use bevy_castle_fight::building_spawning::BuildingSpawningPlugin;
-use bevy_castle_fight::camera::CameraPlugin;
-use bevy_castle_fight::castle_fight_ldtk::CastleFightLdtkPlugin;
-use bevy_castle_fight::health::HealthPlugin;
-use bevy_castle_fight::inspector_plugin::InspectorPlugin;
-use bevy_castle_fight::movement::MovementPlugin;
-use bevy_castle_fight::resources::ResourcesPlugin;
-use bevy_castle_fight::unit_spawning::UnitSpawningPlugin;
-use bevy_castle_fight::vision::VisionPlugin;
-use bevy_castle_fight::waypoints::WaypointPlugin;
+
+mod game;
+mod main_menu;
+mod inspector_plugin;
+
+use inspector_plugin::InspectorPlugin;
+use game::GamePlugin;
+use main_menu::MainMenuPlugin;
 
 fn main() {
     App::new()
@@ -31,26 +27,13 @@ fn main() {
         }),))
         // Debug plugins.
         .add_plugins(InspectorPlugin)
-        // Physics plugins.
+        //Our plugins
         .add_plugins((
-            RapierPhysicsPlugin::<NoUserData>::default(),
-            RapierDebugRenderPlugin::default(),
+            GamePlugin,
+            MainMenuPlugin
         ))
         // Third party plugins.
         .add_plugins(LdtkPlugin)
-        // Castle Fight plugins.
-        .add_plugins((
-            CastleFightLdtkPlugin,
-            ResourcesPlugin,
-            CameraPlugin,
-            WaypointPlugin,
-            VisionPlugin,
-            AttackPlugin,
-            HealthPlugin,
-            MovementPlugin,
-            BuildingSpawningPlugin,
-            UnitSpawningPlugin,
-        ))
         // Third party resources
         .insert_resource(LevelSelection::index(0))
         // Systems.

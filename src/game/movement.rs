@@ -1,5 +1,5 @@
-use crate::attack::AttackTarget;
-use crate::waypoints::Waypoint;
+use crate::game::attack::AttackTarget;
+use crate::game::waypoints::Waypoint;
 use bevy::prelude::*;
 
 // --- Plugin ---
