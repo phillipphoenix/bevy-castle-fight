@@ -10,6 +10,7 @@ bevy = "0.13.0"
 bevy-inspector-egui = "0.23.4"
 bevy_rapier2d = { version = "0.25.0"}
 bevy_ecs_ldtk = { git = "https://github.com/theshortcut/bevy_ecs_ldtk/", branch = "bevy-0.13" }
+bevy_spatial = "0.8.0"
 
 [patch.crates-io]
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap" }

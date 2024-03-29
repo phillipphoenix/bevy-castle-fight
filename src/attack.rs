@@ -1,4 +1,5 @@
 use crate::health::Health;
+use crate::vision::InVision;
 use bevy::prelude::*;
 
 // --- Plugin ---
@@ -7,7 +8,8 @@ pub struct AttackPlugin;
 
 impl Plugin for AttackPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, attack_target);
+        app.add_systems(PreUpdate, find_attack_target)
+            .add_systems(Update, attack_target);
     }
 }
 
@@ -31,6 +33,19 @@ pub struct AttackTarget(pub Entity); // TODO: Make it contain a list of targets.
                                      // This component would always create a new AttackTarget component with the next target, if none exist.
 
 // --- Systems ---
+
+#[allow(clippy::type_complexity)]
+fn find_attack_target(
+    mut commands: Commands,
+    query: Query<(Entity, &InVision), (With<AttackStats>, Without<AttackTarget>)>,
+) {
+    for (entity, in_vision) in query.iter() {
+        if !in_vision.enemies.is_empty() {
+            let target = in_vision.enemies[0];
+            commands.entity(entity).insert(AttackTarget(target));
+        }
+    }
+}
 
 fn attack_target(
     mut commands: Commands,

@@ -1,7 +1,8 @@
 use crate::attack::AttackStats;
 use crate::health::Health;
 use crate::movement::{MovementSpeed, OpponentFollower, WaypointFollower};
-use crate::teams::{Team, TeamEntity};
+use crate::teams::Team;
+use crate::vision::{InVision, Visible, VisionRange};
 use crate::waypoints::WaypointMap;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -22,8 +23,14 @@ pub fn spawn_unit(
     waypoint_map: &Res<WaypointMap>,
 ) {
     let mut unit_entity = commands.spawn((
-        TeamEntity { team },
+        team,
         Unit,
+        Visible,
+        VisionRange(32. * 4.),
+        InVision {
+            friendlies: vec![],
+            enemies: vec![],
+        },
         OpponentFollower,
         Health {
             health: 5,
@@ -42,21 +49,11 @@ pub fn spawn_unit(
             ..Default::default()
         },
         RigidBody::KinematicPositionBased,
-        Collider::ball(32. * 3.), // Vision sensor.
-        Sensor,
-        CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
-        ActiveCollisionTypes::all(), // TODO: Optimize later.
-        ActiveEvents::COLLISION_EVENTS,
+        Collider::ball(20.), // Actual collider matching sprite size.
     ));
+    unit_entity.insert(Name::new("Unit"));
 
     let text_color = team.get_color();
-
-    unit_entity.with_children(|builder| {
-        builder.spawn((
-            Collider::ball(20.), // Actual collider matching sprite size.
-            CollisionGroups::new(Group::GROUP_1, Group::GROUP_2),
-        ));
-    });
 
     unit_entity.with_children(|builder| {
         builder.spawn(Text2dBundle {
