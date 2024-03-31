@@ -2,20 +2,21 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 //mod
+pub mod health;
+pub mod movement;
+pub mod vision;
+pub mod waypoints;
+pub mod teams;
 mod attack;
 mod building_spawning;
 mod camera;
 mod castle_fight_ldtk;
-pub mod health;
-pub mod movement;
 mod resources;
 mod unit_spawning;
-pub mod vision;
-pub mod waypoints;
 mod buildings;
 mod grid_traits;
-pub mod teams;
 mod units;
+mod systems;
 
 // use
 use attack::AttackPlugin;
@@ -28,6 +29,9 @@ use resources::ResourcesPlugin;
 use unit_spawning::UnitSpawningPlugin;
 use vision::VisionPlugin;
 use waypoints::WaypointPlugin;
+use systems::*;
+
+use crate::AppState;
 
 pub struct GamePlugin;
 
@@ -49,7 +53,24 @@ impl Plugin for GamePlugin {
         .add_plugins((
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
-        ));
+        ))
+        // States
+        .init_state::<SimulationState>()
+        //State Transitions
+        .add_systems(OnEnter(SimulationState::Paused),pause_simulation)
+        .add_systems(OnEnter(SimulationState::Running),unpause_simulation)
+        // Systems
+        .add_systems(Update, toggle_simulation.run_if(in_state(AppState::Game)))
+        ;
         
     }
+}
+
+// States - Related to the gameplay
+
+#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub enum SimulationState {
+    #[default]
+    Running,
+    Paused,
 }
