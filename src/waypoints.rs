@@ -1,4 +1,4 @@
-use crate::teams::{Team, TeamEntity};
+use crate::teams::{Team, TeamAssociation};
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_ldtk::prelude::*;
@@ -20,12 +20,11 @@ impl Plugin for WaypointPlugin {
 
 #[derive(Component, Reflect)]
 pub struct Waypoint {
-    pub id: Option<String>,
     pub next_waypoint: Option<Entity>,
 }
 
 /// The waypoint map is used to find the closest starting waypoint for each team.
-#[derive(Resource)]
+#[derive(Resource, Reflect, Default)]
 pub struct WaypointMap {
     pub start_point_waypoints: HashMap<Team, Vec<(Entity, Vec2)>>,
 }
@@ -61,13 +60,17 @@ impl IsStartPoint {
 }
 
 fn add_start_waypoints_to_resources(
-    query: Query<(Entity, &TeamEntity, &Transform), Added<Waypoint>>,
+    query: Query<(Entity, &TeamAssociation, &Transform, &IsStartPoint), Added<Waypoint>>,
     mut waypoint_map: ResMut<WaypointMap>,
 ) {
-    for (new_entity, team_entity, transform) in query.iter() {
+    for (new_entity, team_association, transform, is_starting_point) in query.iter() {
+        if !is_starting_point.0 {
+            continue;
+        }
+
         let team_waypoint_list = waypoint_map
             .start_point_waypoints
-            .entry(team_entity.team)
+            .entry(team_association.0)
             .or_insert(Vec::new());
         team_waypoint_list.push((new_entity, transform.translation.xy()));
     }

@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::buildings::{Building, Castle};
 use crate::health::Health;
-use crate::teams::TeamEntity;
+use crate::teams::{Team, TeamAssociation};
 use crate::waypoints::{IsStartPoint, Waypoint};
 
 /*
@@ -31,8 +31,8 @@ pub struct CastleBundle {
     building: Building,
     #[sprite_bundle]
     sprite_bundle: SpriteBundle,
-    #[with(TeamEntity::from_field)]
-    team_entity: TeamEntity,
+    #[with(Team::from_field)]
+    team: Team,
     #[with(Health::from_field)]
     health: Health,
 }
@@ -42,8 +42,8 @@ pub struct CastleBundle {
 struct WaypointBundle {
     #[sprite_bundle]
     sprite_bundle: SpriteBundle,
-    #[with(TeamEntity::from_field)]
-    team_entity: TeamEntity,
+    #[with(TeamAssociation::from_field)]
+    team_association: TeamAssociation,
     #[with(UnresolvedNextWaypointRef::from_field)]
     unresolved_next_waypoint: UnresolvedNextWaypointRef,
     #[with(IsStartPoint::from_field)]
@@ -88,7 +88,6 @@ fn resolve_next_waypoint_references(
                 .entity(entity)
                 .remove::<UnresolvedNextWaypointRef>()
                 .insert(Waypoint {
-                    id: None,
                     next_waypoint: Some(next_wp_entity),
                 });
         } else {
@@ -98,18 +97,14 @@ fn resolve_next_waypoint_references(
                 .entity(entity)
                 .remove::<UnresolvedNextWaypointRef>()
                 .insert(Waypoint {
-                    id: None,
                     next_waypoint: None,
                 });
         }
     }
 }
 
-fn process_castle(
-    mut commands: Commands,
-    new_castles: Query<(Entity, &TeamEntity), Added<Castle>>,
-) {
-    for (entity, team_entity) in new_castles.iter() {
+fn process_castle(mut commands: Commands, new_castles: Query<(Entity, &Team), Added<Castle>>) {
+    for (entity, team) in new_castles.iter() {
         let mut castle = commands.entity(entity);
         castle.insert((
             RigidBody::KinematicPositionBased,
@@ -121,7 +116,7 @@ fn process_castle(
             ActiveEvents::COLLISION_EVENTS,
         ));
 
-        let text_color = team_entity.team.get_color();
+        let text_color = team.get_color();
 
         castle.with_children(|builder| {
             builder.spawn((
@@ -134,7 +129,7 @@ fn process_castle(
             builder.spawn(Text2dBundle {
                 text: Text {
                     sections: vec![TextSection::new(
-                        team_entity.team.to_string(),
+                        team.to_string(),
                         TextStyle {
                             color: text_color,
                             ..Default::default()

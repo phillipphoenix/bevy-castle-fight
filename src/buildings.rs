@@ -1,6 +1,7 @@
 use crate::health::Health;
-use crate::teams::{Team, TeamEntity};
+use crate::teams::Team;
 use crate::unit_spawning::UnitSpawner;
+use crate::vision::Visible;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -23,8 +24,9 @@ pub struct BuildingGhost {
 /// Helper function to spawn a building. This is not a system.
 pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprite: Handle<Image>) {
     let mut building_entity = commands.spawn((
-        TeamEntity { team },
+        team,
         Building,
+        Visible,
         Health {
             health: 10,
             max_health: 10,
@@ -39,22 +41,10 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
             time_left: 5.0,
         },
         RigidBody::KinematicPositionBased,
-        // Add below back, if building has attack and a vision range.
-        // Collider::cuboid(32.0 * 2, 32.0 * 2),
-        // Sensor,
-        CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
-        ActiveCollisionTypes::all(), // TODO: Optimize later.
-        ActiveEvents::COLLISION_EVENTS,
+        Collider::cuboid(32.0, 32.0), // Actual collider matching sprite size.
     ));
 
     let text_color = team.get_color();
-
-    building_entity.with_children(|builder| {
-        builder.spawn((
-            Collider::cuboid(32.0, 32.0), // Actual collider matching sprite size.
-            CollisionGroups::new(Group::GROUP_1, Group::GROUP_2 | Group::GROUP_3),
-        ));
-    });
 
     building_entity.with_children(|builder| {
         builder.spawn(Text2dBundle {

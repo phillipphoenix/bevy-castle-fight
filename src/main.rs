@@ -16,6 +16,7 @@ use bevy_castle_fight::load_factions::FactionLoaderPlugin;
 use bevy_castle_fight::movement::MovementPlugin;
 use bevy_castle_fight::resources::ResourcesPlugin;
 use bevy_castle_fight::unit_spawning::UnitSpawningPlugin;
+use bevy_castle_fight::vision::VisionPlugin;
 use bevy_castle_fight::waypoints::WaypointPlugin;
 
 fn main() {
@@ -45,6 +46,7 @@ fn main() {
             ResourcesPlugin,
             CameraPlugin,
             WaypointPlugin,
+            VisionPlugin,
             AttackPlugin,
             HealthPlugin,
             MovementPlugin,

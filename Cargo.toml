@@ -13,6 +13,7 @@ bevy_ecs_ldtk = { git = "https://github.com/theshortcut/bevy_ecs_ldtk/", branch 
 serde = { version = "1.0.197", features = ["derive"] }
 thiserror = "1.0.58"
 serde_json = "1.0.115"
+bevy_spatial = "0.8.0"
 
 [patch.crates-io]
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap" }
