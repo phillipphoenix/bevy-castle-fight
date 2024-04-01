@@ -12,6 +12,7 @@ use bevy_castle_fight::camera::CameraPlugin;
 use bevy_castle_fight::castle_fight_ldtk::CastleFightLdtkPlugin;
 use bevy_castle_fight::health::HealthPlugin;
 use bevy_castle_fight::inspector_plugin::InspectorPlugin;
+use bevy_castle_fight::load_factions::FactionLoaderPlugin;
 use bevy_castle_fight::movement::MovementPlugin;
 use bevy_castle_fight::resources::ResourcesPlugin;
 use bevy_castle_fight::unit_spawning::UnitSpawningPlugin;
@@ -39,6 +40,7 @@ fn main() {
         .add_plugins(LdtkPlugin)
         // Castle Fight plugins.
         .add_plugins((
+            FactionLoaderPlugin,
             CastleFightLdtkPlugin,
             ResourcesPlugin,
             CameraPlugin,

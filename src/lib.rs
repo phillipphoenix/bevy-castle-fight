@@ -6,6 +6,7 @@ pub mod castle_fight_ldtk;
 pub mod grid_traits;
 pub mod health;
 pub mod inspector_plugin;
+pub mod load_factions;
 pub mod movement;
 pub mod resources;
 pub mod teams;
