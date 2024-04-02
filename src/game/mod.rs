@@ -1,22 +1,23 @@
 use bevy::prelude::*;
+use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 //mod
-pub mod health;
-pub mod movement;
-pub mod vision;
-pub mod waypoints;
-pub mod teams;
 mod attack;
 mod building_spawning;
+mod buildings;
 mod camera;
 mod castle_fight_ldtk;
-mod resources;
-mod unit_spawning;
-mod buildings;
 mod grid_traits;
-mod units;
+pub mod health;
+pub mod movement;
+mod resources;
 mod systems;
+pub mod teams;
+mod unit_spawning;
+mod units;
+pub mod vision;
+pub mod waypoints;
 
 // use
 use attack::AttackPlugin;
@@ -26,10 +27,10 @@ use castle_fight_ldtk::CastleFightLdtkPlugin;
 use health::HealthPlugin;
 use movement::MovementPlugin;
 use resources::ResourcesPlugin;
+use systems::*;
 use unit_spawning::UnitSpawningPlugin;
 use vision::VisionPlugin;
 use waypoints::WaypointPlugin;
-use systems::*;
 
 use crate::AppState;
 
@@ -56,13 +57,16 @@ impl Plugin for GamePlugin {
         ))
         // States
         .init_state::<SimulationState>()
+        // Third party plugins.
+        .add_plugins(LdtkPlugin)
+        // Third party resources
+        .insert_resource(LevelSelection::index(0))
         //State Transitions
-        .add_systems(OnEnter(SimulationState::Paused),pause_simulation)
-        .add_systems(OnEnter(SimulationState::Running),unpause_simulation)
+        .add_systems(OnEnter(SimulationState::Paused), pause_simulation)
+        .add_systems(OnEnter(SimulationState::Running), unpause_simulation)
         // Systems
         .add_systems(Update, toggle_simulation.run_if(in_state(AppState::Game)))
-        ;
-        
+        .add_systems(Startup, setup);
     }
 }
 
@@ -73,4 +77,11 @@ pub enum SimulationState {
     #[default]
     Running,
     Paused,
+}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(LdtkWorldBundle {
+        ldtk_handle: asset_server.load("maps/map-0.ldtk"),
+        ..Default::default()
+    });
 }

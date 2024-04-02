@@ -12,9 +12,9 @@ pub fn toggle_simulation(
             commands.insert_resource(NextState(Some(SimulationState::Paused)));
             println!("Simulation Paused")
         }
-        if simulation_state.get() == &SimulationState::Paused{
+        if simulation_state.get() == &SimulationState::Paused {
             commands.insert_resource(NextState(Some(SimulationState::Running)));
-            println!("Simulation continued") 
+            println!("Simulation continued")
         }
     }
 }

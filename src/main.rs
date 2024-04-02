@@ -1,19 +1,15 @@
-//use bevy::input::common_conditions::input_just_pressed;
 use bevy::{
     prelude::*,
     render::{settings::WgpuSettings, RenderPlugin},
 };
-use bevy_ecs_ldtk::prelude::*;
-
 
 mod game;
-mod main_menu;
 mod inspector_plugin;
+mod main_menu;
 mod systems;
 
-
-use inspector_plugin::InspectorPlugin;
 use game::GamePlugin;
+use inspector_plugin::InspectorPlugin;
 use main_menu::MainMenuPlugin;
 use systems::*;
 
@@ -34,26 +30,11 @@ fn main() {
         // Debug plugins.
         .add_plugins(InspectorPlugin)
         //Our plugins
-        .add_plugins((
-            GamePlugin,
-            MainMenuPlugin
-        ))
-        // Third party plugins.
-        .add_plugins(LdtkPlugin)
-        // Third party resources
-        .insert_resource(LevelSelection::index(0))
+        .add_plugins((GamePlugin, MainMenuPlugin))
         // Systems.
-        .add_systems(Startup, setup)
         .add_systems(Update, transition_to_gamestate)
-        .add_systems(Update,transition_to_main_menu_state)
+        .add_systems(Update, transition_to_main_menu_state)
         .run();
-}
-
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(LdtkWorldBundle {
-        ldtk_handle: asset_server.load("maps/map-0.ldtk"),
-        ..Default::default()
-    });
 }
 
 // States
