@@ -145,7 +145,7 @@ pub enum ComponentBlueprint {
     Visible,
 }
 
-// --- TEST ---
+// --- Resources ---
 
 #[derive(Resource)]
 struct FactionsFolderHandle(Handle<LoadedFolder>);
@@ -153,11 +153,15 @@ struct FactionsFolderHandle(Handle<LoadedFolder>);
 #[derive(Resource)]
 struct Factions(Vec<FactionBlueprint>);
 
+// --- Systems ---
+
+/// Starts loading all the faction files in the factions folder.
 fn load_factions(mut commands: Commands, asset_server: Res<AssetServer>) {
     let folder_handle = asset_server.load_folder("factions");
     commands.insert_resource(FactionsFolderHandle(folder_handle));
 }
 
+/// Converts the loaded faction files to blueprints and adds them to resources.
 fn setup_factions_resource(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -166,6 +170,7 @@ fn setup_factions_resource(
     loaded_folder: Res<Assets<LoadedFolder>>,
     factions: Res<Assets<FactionAsset>>,
 ) {
+    // Waits for the event telling that the files were loaded.
     for event in events.read() {
         if event.is_loaded_with_dependencies(&factions_folder.0) {
             if let Some(loaded_factions) = loaded_folder.get(&factions_folder.0) {
