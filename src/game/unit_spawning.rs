@@ -1,6 +1,6 @@
-use crate::teams::Team;
-use crate::units::spawn_unit;
-use crate::waypoints::WaypointMap;
+use crate::game::teams::Team;
+use crate::game::units::spawn_unit;
+use crate::game::waypoints::WaypointMap;
 use bevy::prelude::*;
 
 // --- Plugin ---

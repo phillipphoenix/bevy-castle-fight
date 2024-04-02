@@ -1,9 +1,9 @@
-use crate::attack::AttackStats;
-use crate::health::Health;
-use crate::movement::{MovementSpeed, OpponentFollower, WaypointFollower};
-use crate::teams::Team;
-use crate::vision::{InVision, Visible, VisionRange};
-use crate::waypoints::WaypointMap;
+use crate::game::attack::AttackStats;
+use crate::game::health::Health;
+use crate::game::movement::{MovementSpeed, OpponentFollower, WaypointFollower};
+use crate::game::teams::Team;
+use crate::game::vision::{InVision, Visible, VisionRange};
+use crate::game::waypoints::WaypointMap;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 

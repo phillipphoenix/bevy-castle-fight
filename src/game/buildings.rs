@@ -1,7 +1,7 @@
-use crate::health::Health;
-use crate::teams::Team;
-use crate::unit_spawning::UnitSpawner;
-use crate::vision::Visible;
+use crate::game::health::Health;
+use crate::game::teams::Team;
+use crate::game::unit_spawning::UnitSpawner;
+use crate::game::vision::Visible;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -64,7 +64,7 @@ pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprit
     });
 }
 
-/// Helper function to spawn a ghost building (for building new buildings). This is not a function.
+/// Helper function to spawn a ghost building (for building new buildings). This is not a system.
 pub fn spawn_ghost_building(
     commands: &mut Commands,
     team: Team,

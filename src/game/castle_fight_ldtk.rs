@@ -2,10 +2,10 @@ use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::buildings::{Building, Castle};
-use crate::health::Health;
-use crate::teams::{Team, TeamAssociation};
-use crate::waypoints::{IsStartPoint, Waypoint};
+use crate::game::buildings::{Building, Castle};
+use crate::game::health::Health;
+use crate::game::teams::{Team, TeamAssociation};
+use crate::game::waypoints::{IsStartPoint, Waypoint};
 
 /*
 Handles all LDtk bundles and processing and resolving of these components.

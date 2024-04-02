@@ -1,22 +1,17 @@
-use bevy::input::common_conditions::input_just_pressed;
 use bevy::{
     prelude::*,
     render::{settings::WgpuSettings, RenderPlugin},
 };
-use bevy_ecs_ldtk::prelude::*;
-use bevy_rapier2d::prelude::*;
 
-use bevy_castle_fight::attack::AttackPlugin;
-use bevy_castle_fight::building_spawning::BuildingSpawningPlugin;
-use bevy_castle_fight::camera::CameraPlugin;
-use bevy_castle_fight::castle_fight_ldtk::CastleFightLdtkPlugin;
-use bevy_castle_fight::health::HealthPlugin;
-use bevy_castle_fight::inspector_plugin::InspectorPlugin;
-use bevy_castle_fight::movement::MovementPlugin;
-use bevy_castle_fight::resources::ResourcesPlugin;
-use bevy_castle_fight::unit_spawning::UnitSpawningPlugin;
-use bevy_castle_fight::vision::VisionPlugin;
-use bevy_castle_fight::waypoints::WaypointPlugin;
+mod game;
+mod inspector_plugin;
+mod main_menu;
+mod systems;
+
+use game::GamePlugin;
+use inspector_plugin::InspectorPlugin;
+use main_menu::MainMenuPlugin;
+use systems::*;
 
 fn main() {
     App::new()
@@ -29,50 +24,23 @@ fn main() {
             }),
             synchronous_pipeline_compilation: false,
         }),))
+        //States
+        .insert_state(AppState::Game)
+        //State transitions
         // Debug plugins.
         .add_plugins(InspectorPlugin)
-        // Physics plugins.
-        .add_plugins((
-            RapierPhysicsPlugin::<NoUserData>::default(),
-            RapierDebugRenderPlugin::default(),
-        ))
-        // Third party plugins.
-        .add_plugins(LdtkPlugin)
-        // Castle Fight plugins.
-        .add_plugins((
-            CastleFightLdtkPlugin,
-            ResourcesPlugin,
-            CameraPlugin,
-            WaypointPlugin,
-            VisionPlugin,
-            AttackPlugin,
-            HealthPlugin,
-            MovementPlugin,
-            BuildingSpawningPlugin,
-            UnitSpawningPlugin,
-        ))
-        // Third party resources
-        .insert_resource(LevelSelection::index(0))
+        //Our plugins
+        .add_plugins((GamePlugin, MainMenuPlugin))
         // Systems.
-        .add_systems(Startup, setup)
-        .add_systems(
-            Update,
-            toggle_pause.run_if(input_just_pressed(KeyCode::Space)),
-        )
+        .add_systems(Update, transition_to_gamestate)
+        .add_systems(Update, transition_to_main_menu_state)
         .run();
 }
 
-fn toggle_pause(mut time: ResMut<Time<Virtual>>) {
-    if time.is_paused() {
-        time.unpause();
-    } else {
-        time.pause();
-    }
-}
-
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(LdtkWorldBundle {
-        ldtk_handle: asset_server.load("maps/map-0.ldtk"),
-        ..Default::default()
-    });
+// States
+#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub enum AppState {
+    #[default]
+    Game,
+    MainMenu,
 }

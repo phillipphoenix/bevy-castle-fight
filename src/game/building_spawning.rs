@@ -1,7 +1,7 @@
-use crate::buildings::{spawn_building, spawn_ghost_building, Building, BuildingGhost};
-use crate::grid_traits::SnapToGrid;
-use crate::resources::MousePosition;
-use crate::teams::Team;
+use crate::game::buildings::{spawn_building, spawn_ghost_building, Building, BuildingGhost};
+use crate::game::grid_traits::SnapToGrid;
+use crate::game::resources::MousePosition;
+use crate::game::teams::Team;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_rapier2d::pipeline::CollisionEvent;

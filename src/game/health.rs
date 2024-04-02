@@ -1,4 +1,4 @@
-use crate::teams::Team;
+use crate::game::teams::Team;
 use bevy::prelude::PostUpdate;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::LdtkFields;
