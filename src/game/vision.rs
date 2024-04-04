@@ -5,7 +5,7 @@ use bevy::time::common_conditions::on_timer;
 use bevy_spatial::kdtree::KDTree2;
 use bevy_spatial::{AutomaticUpdate, SpatialAccess, SpatialStructure, TransformMode};
 
-use crate::teams::Team;
+use crate::game::teams::Team;
 
 // --- Plugin ---
 

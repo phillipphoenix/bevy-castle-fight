@@ -1,4 +1,4 @@
-use crate::teams::{Team, TeamAssociation};
+use crate::game::teams::{Team, TeamAssociation};
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_ldtk::prelude::*;

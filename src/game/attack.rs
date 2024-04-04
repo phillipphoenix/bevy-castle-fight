@@ -1,5 +1,5 @@
-use crate::health::Health;
-use crate::vision::InVision;
+use crate::game::health::Health;
+use crate::game::vision::InVision;
 use bevy::prelude::*;
 
 // --- Plugin ---
