@@ -10,6 +10,9 @@ use serde::Deserialize;
 use serde_json::from_slice;
 use thiserror::Error;
 
+use crate::load_game::LoadingSet::{LoadStartup, LoadUpdate};
+use crate::AppState;
+
 /// Plugin to load your asset type [`FactionAsset`] from json files.
 pub struct FactionLoaderPlugin;
 
@@ -17,14 +20,15 @@ impl Plugin for FactionLoaderPlugin {
     fn build(&self, app: &mut App) {
         app.register_asset_loader::<FactionAssetLoader>(FactionAssetLoader)
             .init_asset::<FactionAsset>()
-            .insert_resource(Factions(vec![]))
-            .add_systems(Startup, load_factions)
+            .add_systems(
+                OnEnter(AppState::LoadGameAssets),
+                load_factions.in_set(LoadStartup),
+            )
             .add_systems(
                 Update,
-                (
-                    setup_factions_resource.after(load_factions),
-                    display_content.after(setup_factions_resource), // TODO: Remove display_content, when actually using the factions resource.
-                ),
+                (setup_factions_resource, display_content)
+                    .chain()
+                    .in_set(LoadUpdate),
             );
     }
 }
@@ -159,6 +163,7 @@ struct Factions(Vec<FactionBlueprint>);
 fn load_factions(mut commands: Commands, asset_server: Res<AssetServer>) {
     let folder_handle = asset_server.load_folder("factions");
     commands.insert_resource(FactionsFolderHandle(folder_handle));
+    info!("FACTIONS FOLDER HANDLE ADDED TO RESROURCES!");
 }
 
 /// Converts the loaded faction files to blueprints and adds them to resources.
@@ -221,7 +226,11 @@ fn setup_factions_resource(
 }
 
 /// This is a test function to see that it works. When factions are in use, this should be removed.
-fn display_content(mut commands: Commands, factions_res: Option<Res<Factions>>) {
+fn display_content(
+    mut commands: Commands,
+    factions_res: Option<Res<Factions>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
     let Some(factions) = factions_res else {
         return;
     };
@@ -231,4 +240,8 @@ fn display_content(mut commands: Commands, factions_res: Option<Res<Factions>>) 
         info!("FACTION: {:?}", faction);
     }
     commands.remove_resource::<Factions>();
+
+    // Moving to the next state here is temporary.
+    next_state.set(AppState::Game);
+    println!("Entered Game State")
 }

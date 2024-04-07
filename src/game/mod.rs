@@ -2,6 +2,21 @@ use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+// use
+use attack::AttackPlugin;
+use building_spawning::BuildingSpawningPlugin;
+use camera::CameraPlugin;
+use castle_fight_ldtk::CastleFightLdtkPlugin;
+use health::HealthPlugin;
+use movement::MovementPlugin;
+use resources::ResourcesPlugin;
+use systems::*;
+use unit_spawning::UnitSpawningPlugin;
+use vision::VisionPlugin;
+use waypoints::WaypointPlugin;
+
+use crate::AppState;
+
 //mod
 mod attack;
 mod building_spawning;
@@ -18,21 +33,6 @@ mod unit_spawning;
 mod units;
 pub mod vision;
 pub mod waypoints;
-
-// use
-use attack::AttackPlugin;
-use building_spawning::BuildingSpawningPlugin;
-use camera::CameraPlugin;
-use castle_fight_ldtk::CastleFightLdtkPlugin;
-use health::HealthPlugin;
-use movement::MovementPlugin;
-use resources::ResourcesPlugin;
-use systems::*;
-use unit_spawning::UnitSpawningPlugin;
-use vision::VisionPlugin;
-use waypoints::WaypointPlugin;
-
-use crate::AppState;
 
 pub struct GamePlugin;
 

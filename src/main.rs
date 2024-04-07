@@ -3,15 +3,17 @@ use bevy::{
     render::{settings::WgpuSettings, RenderPlugin},
 };
 
-mod game;
-mod inspector_plugin;
-mod main_menu;
-mod systems;
-
+use crate::load_game::LoadGamePlugin;
 use game::GamePlugin;
 use inspector_plugin::InspectorPlugin;
 use main_menu::MainMenuPlugin;
 use systems::*;
+
+mod game;
+mod inspector_plugin;
+mod load_game;
+mod main_menu;
+mod systems;
 
 fn main() {
     App::new()
@@ -25,14 +27,14 @@ fn main() {
             synchronous_pipeline_compilation: false,
         }),))
         //States
-        .insert_state(AppState::Game)
+        .insert_state(AppState::MainMenu)
         //State transitions
         // Debug plugins.
         .add_plugins(InspectorPlugin)
         //Our plugins
-        .add_plugins((GamePlugin, MainMenuPlugin))
+        .add_plugins((MainMenuPlugin, LoadGamePlugin, GamePlugin))
         // Systems.
-        .add_systems(Update, transition_to_gamestate)
+        .add_systems(Update, transition_to_game_state)
         .add_systems(Update, transition_to_main_menu_state)
         .run();
 }
@@ -41,6 +43,7 @@ fn main() {
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum AppState {
     #[default]
-    Game,
     MainMenu,
+    LoadGameAssets,
+    Game,
 }
