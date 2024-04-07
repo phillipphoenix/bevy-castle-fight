@@ -1,0 +1,52 @@
+{
+  "id": "faction_human",
+  "name": "Humans",
+  "buildings": [
+    {
+      "id": "human_house",
+      "name": "House",
+      "sprite": "prototype-building.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 10,
+            "health": 10
+          }
+        },
+        {
+          "UnitSpawner": {
+            "unit_id": "human_peasant",
+            "spawn_time": 5.0
+          }
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "human_peasant",
+      "name": "Peasant",
+      "sprite": "prototype-unit.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 5,
+            "health": 5
+          }
+        },
+        {
+          "AttackStats": {
+            "damage": 1,
+            "attack_speed": 1.0,
+            "attack_range": 16
+          }
+        },
+        "OpponentFollower",
+        {
+          "MovementSpeed": 96
+        },
+        "Visible"
+      ]
+    }
+  ]
+}
