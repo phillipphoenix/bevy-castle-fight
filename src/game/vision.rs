@@ -9,11 +9,14 @@ use crate::game::teams::Team;
 
 // --- Plugin ---
 
-pub struct VisionPlugin;
+pub struct VisionPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for VisionPlugin {
+impl<S: States> Plugin for VisionPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_plugins(
+            // Make this only work when entering the game state.
             AutomaticUpdate::<Team>::new()
                 .with_spatial_ds(SpatialStructure::KDTree2)
                 .with_frequency(Duration::from_millis(200))
@@ -21,7 +24,9 @@ impl Plugin for VisionPlugin {
         )
         .add_systems(
             Update,
-            check_vision.run_if(on_timer(Duration::from_millis(200))),
+            check_vision
+                .run_if(on_timer(Duration::from_millis(200)))
+                .run_if(in_state(self.state.clone())),
         );
     }
 }

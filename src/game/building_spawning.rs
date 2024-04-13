@@ -1,16 +1,19 @@
-use crate::game::buildings::{spawn_building, spawn_ghost_building, Building, BuildingGhost};
-use crate::game::grid_traits::SnapToGrid;
-use crate::game::resources::MousePosition;
-use crate::game::teams::Team;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_rapier2d::pipeline::CollisionEvent;
 
+use crate::game::buildings::{spawn_building, spawn_ghost_building, Building, BuildingGhost};
+use crate::game::grid_traits::SnapToGrid;
+use crate::game::resources::MousePosition;
+use crate::game::teams::Team;
+
 // --- Plugin ---
 
-pub struct BuildingSpawningPlugin;
+pub struct BuildingSpawningPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for BuildingSpawningPlugin {
+impl<S: States> Plugin for BuildingSpawningPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
@@ -20,7 +23,8 @@ impl Plugin for BuildingSpawningPlugin {
                 cancel_building,
                 ghost_building_collision_system,
                 building_placement,
-            ),
+            )
+                .run_if(in_state(self.state.clone())),
         );
     }
 }

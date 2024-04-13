@@ -39,16 +39,32 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            CastleFightLdtkPlugin,
+            CastleFightLdtkPlugin {
+                state: AppState::Game,
+            },
             ResourcesPlugin,
             CameraPlugin,
-            WaypointPlugin,
-            VisionPlugin,
-            AttackPlugin,
-            HealthPlugin,
-            MovementPlugin,
-            BuildingSpawningPlugin,
-            UnitSpawningPlugin,
+            WaypointPlugin {
+                state: AppState::Game,
+            },
+            VisionPlugin {
+                state: AppState::Game,
+            },
+            AttackPlugin {
+                state: AppState::Game,
+            },
+            HealthPlugin {
+                state: AppState::Game,
+            },
+            MovementPlugin {
+                state: AppState::Game,
+            },
+            BuildingSpawningPlugin {
+                state: AppState::Game,
+            },
+            UnitSpawningPlugin {
+                state: AppState::Game,
+            },
         ))
         // Physics plugins.
         .add_plugins((
@@ -66,7 +82,8 @@ impl Plugin for GamePlugin {
         .add_systems(OnEnter(SimulationState::Running), unpause_simulation)
         // Systems
         .add_systems(Update, toggle_simulation.run_if(in_state(AppState::Game)))
-        .add_systems(Startup, setup);
+        .add_systems(OnEnter(AppState::Game), setup)
+        .add_systems(OnExit(AppState::Game), cleanup_after_game);
     }
 }
 
@@ -79,9 +96,25 @@ pub enum SimulationState {
     Paused,
 }
 
+// --- Components ---
+
+#[derive(Component, Default)]
+pub struct InGameTag;
+
+// --- Systems ---
+
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(LdtkWorldBundle {
-        ldtk_handle: asset_server.load("maps/map-0.ldtk"),
-        ..Default::default()
-    });
+    commands.spawn((
+        InGameTag,
+        LdtkWorldBundle {
+            ldtk_handle: asset_server.load("maps/map-0.ldtk"),
+            ..Default::default()
+        },
+    ));
+}
+
+fn cleanup_after_game(mut commands: Commands, query: Query<Entity, With<InGameTag>>) {
+    for game_entity in query.iter() {
+        commands.entity(game_entity).despawn_recursive();
+    }
 }

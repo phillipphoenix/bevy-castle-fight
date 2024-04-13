@@ -4,9 +4,11 @@ use bevy::prelude::*;
 
 // --- Plugin ---
 
-pub struct MovementPlugin;
+pub struct MovementPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for MovementPlugin {
+impl<S: States> Plugin for MovementPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
@@ -15,7 +17,8 @@ impl Plugin for MovementPlugin {
                 sync_waypoint_move_target.after(sync_attack_move_target),
                 move_towards_target,
                 move_towards_point.after(move_towards_target),
-            ),
+            )
+                .run_if(in_state(self.state.clone())),
         );
     }
 }

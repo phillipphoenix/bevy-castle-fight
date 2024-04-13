@@ -4,6 +4,7 @@ use crate::game::movement::{MovementSpeed, OpponentFollower, WaypointFollower};
 use crate::game::teams::Team;
 use crate::game::vision::{InVision, Visible, VisionRange};
 use crate::game::waypoints::WaypointMap;
+use crate::game::InGameTag;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -23,6 +24,7 @@ pub fn spawn_unit(
     waypoint_map: &Res<WaypointMap>,
 ) {
     let mut unit_entity = commands.spawn((
+        InGameTag,
         team,
         Unit,
         Visible,

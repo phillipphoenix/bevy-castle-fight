@@ -1,16 +1,19 @@
-use crate::game::teams::Team;
 use bevy::prelude::PostUpdate;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::LdtkFields;
 use bevy_ecs_ldtk::EntityInstance;
 
+use crate::game::teams::Team;
+
 // --- Plugin ---
 
-pub struct HealthPlugin;
+pub struct HealthPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for HealthPlugin {
+impl<S: States> Plugin for HealthPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_systems(PostUpdate, check_death);
+        app.add_systems(PostUpdate, check_death.run_if(in_state(self.state.clone())));
     }
 }
 

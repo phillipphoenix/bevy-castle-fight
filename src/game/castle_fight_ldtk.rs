@@ -6,6 +6,7 @@ use crate::game::buildings::{Building, Castle};
 use crate::game::health::Health;
 use crate::game::teams::{Team, TeamAssociation};
 use crate::game::waypoints::{IsStartPoint, Waypoint};
+use crate::game::InGameTag;
 
 /*
 Handles all LDtk bundles and processing and resolving of these components.
@@ -13,13 +14,19 @@ Handles all LDtk bundles and processing and resolving of these components.
 
 // --- Plugin ---
 
-pub struct CastleFightLdtkPlugin;
+pub struct CastleFightLdtkPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for CastleFightLdtkPlugin {
+impl<S: States> Plugin for CastleFightLdtkPlugin<S> {
     fn build(&self, app: &mut App) {
         app.register_ldtk_entity::<CastleBundle>("Castle")
             .register_ldtk_entity::<WaypointBundle>("Waypoint")
-            .add_systems(Update, (process_castle, resolve_next_waypoint_references));
+            .add_systems(
+                Update,
+                (process_castle, resolve_next_waypoint_references)
+                    .run_if(in_state(self.state.clone())),
+            );
     }
 }
 
@@ -27,6 +34,7 @@ impl Plugin for CastleFightLdtkPlugin {
 
 #[derive(Default, Bundle, LdtkEntity)]
 pub struct CastleBundle {
+    in_game_tag: InGameTag,
     castle: Castle,
     building: Building,
     #[sprite_bundle]
@@ -38,8 +46,9 @@ pub struct CastleBundle {
 }
 
 /// Used to load waypoints from LDTK map.
-#[derive(Bundle, LdtkEntity)]
+#[derive(Default, Bundle, LdtkEntity)]
 struct WaypointBundle {
+    in_game_tag: InGameTag,
     #[sprite_bundle]
     sprite_bundle: SpriteBundle,
     #[with(TeamAssociation::from_field)]
