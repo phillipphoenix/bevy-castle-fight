@@ -26,7 +26,6 @@ pub struct AttackStats {
     pub attack_speed: f32,
     /// Used to check if the attack target is within striking range.
     pub attack_range: f32,
-    //pub time_till_next_attack: f32,
     pub time_till_next_attack: Timer,
 }
 
@@ -58,24 +57,20 @@ fn attack_target(
     mut attacker_query: Query<(Entity, &mut AttackStats, &AttackTarget)>,
     mut defender_query: Query<&mut Health>,
     time: Res<Time>,
-    
 ) {
     for (entity, mut attack_stats, target) in attacker_query.iter_mut() {
-        
         // Don't attack, if attack cooldown hasn't finished.
         if !attack_stats.time_till_next_attack.finished() {
-
             // tick the timer
             attack_stats.time_till_next_attack.tick(time.delta());
-            
-                        return;
+
+            return;
         }
 
         if let Ok(mut health) = defender_query.get_mut(target.0) {
             // TODO: Make a more intricate damage calculation.
             health.health -= attack_stats.damage;
             info!("{:?} damage taken!", attack_stats.damage);
-            
         } else {
             // If the target has no health component,
             // it probably died, so lets remove the attack target.
@@ -85,4 +80,3 @@ fn attack_target(
         }
     }
 }
-
