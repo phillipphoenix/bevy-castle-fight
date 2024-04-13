@@ -74,11 +74,11 @@ fn setup_ui(mut commands: Commands, selected_faction: Res<SelectedFaction>) {
                                 // Set a height and the aspect ratio to be 1:1, so it will auto set the width
                                 // to be equal to the height.
                                 height: Val::Percent(30.),
-                                aspect_ratio: Some(1.0),
+                                aspect_ratio: Some(1.25),
                                 // Set the grid to have 4 columns.
                                 grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
                                 // Set the grid to have 4 rows.
-                                grid_template_rows: RepeatedGridTrack::flex(4, 1.0),
+                                grid_template_rows: RepeatedGridTrack::flex(3, 1.0),
                                 // Set a gap between each cell.
                                 row_gap: Val::Px(12.),
                                 column_gap: Val::Px(12.),
