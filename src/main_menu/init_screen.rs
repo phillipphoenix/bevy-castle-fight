@@ -2,7 +2,9 @@
 
 use bevy::prelude::*;
 
+use crate::load_game::load_factions::Factions;
 use crate::main_menu::MainMenuTag;
+use crate::resources::SelectedFaction;
 use crate::AppState;
 
 pub struct InitScreenPlugin<S: States> {
@@ -106,14 +108,25 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn btn_play_interaction(
+    mut commands: Commands,
     mut query: Query<(&Interaction, &mut BackgroundColor), With<BtnPlay>>,
     mut next_state: ResMut<NextState<AppState>>,
+    loaded_factions: Option<Res<Factions>>,
 ) {
     for (interaction, mut bg_colour) in &mut query {
         match *interaction {
             Interaction::Pressed => {
                 *bg_colour = PRESSED_BUTTON.into();
-                next_state.set(AppState::Game)
+                if let Some(factions) = &loaded_factions {
+                    if let Some(selected_faction) = factions.0.first().cloned() {
+                        commands.insert_resource(SelectedFaction(selected_faction));
+                        next_state.set(AppState::Game)
+                    } else {
+                        error!("Couldn't get a faction from loaded factions to set as the selected faction.")
+                    }
+                } else {
+                    error!("No factions loaded...")
+                }
             }
             Interaction::Hovered => {
                 *bg_colour = HOVERED_BUTTON.into();

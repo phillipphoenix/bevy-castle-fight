@@ -4,7 +4,7 @@ use crate::load_game::load_factions::FactionLoaderPlugin;
 use crate::load_game::LoadingSet::{LoadStartup, LoadUpdate};
 use crate::AppState;
 
-mod load_factions;
+pub mod load_factions;
 
 pub struct LoadGamePlugin;
 

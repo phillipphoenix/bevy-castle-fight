@@ -14,6 +14,7 @@ mod game;
 mod inspector_plugin;
 mod load_game;
 mod main_menu;
+mod resources;
 mod systems;
 
 fn main() {

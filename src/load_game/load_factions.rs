@@ -106,7 +106,7 @@ struct UnitData {
 
 // --- Resource types ---
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Clone, Reflect)]
 pub struct FactionBlueprint {
     pub id: String,
     pub name: String,
@@ -114,7 +114,7 @@ pub struct FactionBlueprint {
     pub units: Vec<UnitBlueprint>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Reflect)]
 pub struct BuildingBlueprint {
     pub id: String,
     pub name: String,
@@ -123,7 +123,7 @@ pub struct BuildingBlueprint {
     pub components: Vec<ComponentBlueprint>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Reflect)]
 pub struct UnitBlueprint {
     pub id: String,
     pub name: String,
@@ -131,7 +131,7 @@ pub struct UnitBlueprint {
     pub components: Vec<ComponentBlueprint>,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Clone, Reflect)]
 pub enum ComponentBlueprint {
     UnitSpawner {
         unit_id: String,
@@ -156,8 +156,8 @@ pub enum ComponentBlueprint {
 #[derive(Resource)]
 struct FactionsFolderHandle(Handle<LoadedFolder>);
 
-#[derive(Resource)]
-struct Factions(Vec<FactionBlueprint>);
+#[derive(Resource, Reflect)]
+pub struct Factions(pub Vec<FactionBlueprint>);
 
 // --- Systems ---
 
@@ -222,7 +222,8 @@ fn setup_factions_resource(
                     faction_blueprints.push(faction_blueprint);
                 }
 
-                commands.insert_resource(Factions(faction_blueprints))
+                commands.insert_resource(Factions(faction_blueprints));
+                info!("Factions resource has been inserted!");
             }
         }
     }
@@ -230,7 +231,6 @@ fn setup_factions_resource(
 
 /// This is a test function to see that it works. When factions are in use, this should be removed.
 fn display_content(
-    mut commands: Commands,
     factions_res: Option<Res<Factions>>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
@@ -242,7 +242,6 @@ fn display_content(
     for faction in factions.0.iter() {
         info!("FACTION: {:?}", faction);
     }
-    commands.remove_resource::<Factions>();
 
     // Moving to the next state here is temporary.
     next_state.set(AppState::MainMenu);
