@@ -92,6 +92,7 @@ struct BuildingData {
     id: String,
     name: String,
     sprite: String,
+    icon: String,
     components: Vec<ComponentBlueprint>,
 }
 
@@ -118,6 +119,7 @@ pub struct BuildingBlueprint {
     pub id: String,
     pub name: String,
     pub sprite: Handle<Image>,
+    pub icon: Handle<Image>,
     pub components: Vec<ComponentBlueprint>,
 }
 
@@ -201,6 +203,7 @@ fn setup_factions_resource(
                                 id: building_asset.id.clone(),
                                 name: building_asset.name.clone(),
                                 sprite: asset_server.load(&building_asset.sprite),
+                                icon: asset_server.load(&building_asset.icon),
                                 components: building_asset.components.clone(),
                             })
                             .collect(),
@@ -242,6 +245,6 @@ fn display_content(
     commands.remove_resource::<Factions>();
 
     // Moving to the next state here is temporary.
-    next_state.set(AppState::Game);
-    println!("Entered Game State")
+    next_state.set(AppState::MainMenu);
+    println!("Entered Main Menu")
 }

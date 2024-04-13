@@ -113,7 +113,7 @@ fn btn_play_interaction(
         match *interaction {
             Interaction::Pressed => {
                 *bg_colour = PRESSED_BUTTON.into();
-                next_state.set(AppState::LoadGameAssets)
+                next_state.set(AppState::Game)
             }
             Interaction::Hovered => {
                 *bg_colour = HOVERED_BUTTON.into();

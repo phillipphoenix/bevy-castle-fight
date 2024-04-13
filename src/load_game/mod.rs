@@ -23,7 +23,7 @@ impl Plugin for LoadGamePlugin {
             .add_plugins(FactionLoaderPlugin)
             // Third party plugins.
             // Third party resources
-            //State Transitions
+            // State Transitions
             // Systems
             .add_systems(Update, apply_deferred.after(LoadStartup).before(LoadUpdate));
     }
