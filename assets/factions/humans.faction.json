@@ -3,9 +3,9 @@
   "name": "Humans",
   "buildings": [
     {
-      "id": "human_house",
-      "name": "House",
-      "sprite": "prototype-building.png",
+      "id": "human_b_barracks",
+      "name": "Barracks",
+      "sprite": "faction-assets/human_b_barracks.png",
       "components": [
         {
           "Health": {
@@ -15,7 +15,64 @@
         },
         {
           "UnitSpawner": {
-            "unit_id": "human_peasant",
+            "unit_id": "human_u_spearman",
+            "spawn_time": 5.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "human_b_archery-range",
+      "name": "Archery Range",
+      "sprite": "faction-assets/human_b_archery-range.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 10,
+            "health": 10
+          }
+        },
+        {
+          "UnitSpawner": {
+            "unit_id": "human_u_archer",
+            "spawn_time": 5.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "human_b_fire-mage-tower",
+      "name": "Fire Mage Tower",
+      "sprite": "faction-assets/human_b_fire-mage-tower.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 10,
+            "health": 10
+          }
+        },
+        {
+          "UnitSpawner": {
+            "unit_id": "human_u_fire-mage",
+            "spawn_time": 5.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "human_b_siege-workshop",
+      "name": "Siege Workshop",
+      "sprite": "faction-assets/human_b_siege-workshop.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 10,
+            "health": 10
+          }
+        },
+        {
+          "UnitSpawner": {
+            "unit_id": "human_u_catapult",
             "spawn_time": 5.0
           }
         }
@@ -24,9 +81,9 @@
   ],
   "units": [
     {
-      "id": "human_peasant",
-      "name": "Peasant",
-      "sprite": "prototype-unit.png",
+      "id": "human_u_spearman",
+      "name": "Spearman",
+      "sprite": "faction-assets/human_u_spearman.png",
       "components": [
         {
           "Health": {
@@ -44,6 +101,81 @@
         "OpponentFollower",
         {
           "MovementSpeed": 96
+        },
+        "Visible"
+      ]
+    },
+    {
+      "id": "human_u_archer",
+      "name": "Archer",
+      "sprite": "faction-assets/human_u_archer.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 5,
+            "health": 5
+          }
+        },
+        {
+          "AttackStats": {
+            "damage": 1,
+            "attack_speed": 1.0,
+            "attack_range": 64
+          }
+        },
+        "OpponentFollower",
+        {
+          "MovementSpeed": 96
+        },
+        "Visible"
+      ]
+    },
+    {
+      "id": "human_u_fire-mage",
+      "name": "Spearman",
+      "sprite": "faction-assets/human_u_fire-mage.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 5,
+            "health": 5
+          }
+        },
+        {
+          "AttackStats": {
+            "damage": 1,
+            "attack_speed": 1.0,
+            "attack_range": 48
+          }
+        },
+        "OpponentFollower",
+        {
+          "MovementSpeed": 80
+        },
+        "Visible"
+      ]
+    },
+    {
+      "id": "human_u_catapult",
+      "name": "Spearman",
+      "sprite": "faction-assets/human_u_catapult.png",
+      "components": [
+        {
+          "Health": {
+            "max_health": 5,
+            "health": 5
+          }
+        },
+        {
+          "AttackStats": {
+            "damage": 1,
+            "attack_speed": 1.0,
+            "attack_range": 48
+          }
+        },
+        "OpponentFollower",
+        {
+          "MovementSpeed": 64
         },
         "Visible"
       ]
