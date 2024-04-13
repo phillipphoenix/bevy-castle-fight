@@ -1,8 +1,9 @@
+use std::fmt;
+use std::fmt::Formatter;
+
 use bevy::prelude::{Color, Component, Reflect};
 use bevy_ecs_ldtk::prelude::LdtkFields;
 use bevy_ecs_ldtk::EntityInstance;
-use std::fmt;
-use std::fmt::Formatter;
 
 // --- Enums ---
 
@@ -54,7 +55,7 @@ impl Team {
 /// Team association is used, when an entity is not directly part of a team (for instance waypoints),
 /// but is associated with a team. This allows systems to make
 /// a distinction between active team members and associated entities.
-#[derive(Component, Reflect)]
+#[derive(Default, Component, Reflect)]
 pub struct TeamAssociation(pub Team);
 
 impl TeamAssociation {

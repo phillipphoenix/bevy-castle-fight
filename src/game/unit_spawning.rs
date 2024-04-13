@@ -5,11 +5,16 @@ use bevy::prelude::*;
 
 // --- Plugin ---
 
-pub struct UnitSpawningPlugin;
+pub struct UnitSpawningPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for UnitSpawningPlugin {
+impl<S: States> Plugin for UnitSpawningPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, unit_spawner_spawn_units);
+        app.add_systems(
+            Update,
+            unit_spawner_spawn_units.run_if(in_state(self.state.clone())),
+        );
     }
 }
 

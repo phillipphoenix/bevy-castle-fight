@@ -2,6 +2,7 @@ use crate::game::health::Health;
 use crate::game::teams::Team;
 use crate::game::unit_spawning::UnitSpawner;
 use crate::game::vision::Visible;
+use crate::game::InGameTag;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -24,6 +25,7 @@ pub struct BuildingGhost {
 /// Helper function to spawn a building. This is not a system.
 pub fn spawn_building(commands: &mut Commands, team: Team, x: f32, y: f32, sprite: Handle<Image>) {
     let mut building_entity = commands.spawn((
+        InGameTag,
         team,
         Building,
         Visible,
@@ -73,6 +75,7 @@ pub fn spawn_ghost_building(
     sprite: Handle<Image>,
 ) {
     commands.spawn((
+        InGameTag,
         BuildingGhost {
             placement_valid: true,
             team,

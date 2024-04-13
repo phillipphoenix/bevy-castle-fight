@@ -1,18 +1,24 @@
-use crate::game::teams::{Team, TeamAssociation};
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_ecs_ldtk::prelude::*;
 
+use crate::game::teams::{Team, TeamAssociation};
+
 // --- Plugin ---
 
-pub struct WaypointPlugin;
+pub struct WaypointPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for WaypointPlugin {
+impl<S: States> Plugin for WaypointPlugin<S> {
     fn build(&self, app: &mut App) {
         app.insert_resource(WaypointMap {
             start_point_waypoints: HashMap::default(),
         })
-        .add_systems(Update, (add_start_waypoints_to_resources,));
+        .add_systems(
+            Update,
+            add_start_waypoints_to_resources.run_if(in_state(self.state.clone())),
+        );
     }
 }
 
@@ -46,7 +52,7 @@ impl WaypointMap {
     }
 }
 
-#[derive(Component, Reflect)]
+#[derive(Default, Component, Reflect)]
 pub struct IsStartPoint(bool);
 
 impl IsStartPoint {

@@ -4,12 +4,17 @@ use bevy::prelude::*;
 
 // --- Plugin ---
 
-pub struct AttackPlugin;
+pub struct AttackPlugin<S: States> {
+    pub state: S,
+}
 
-impl Plugin for AttackPlugin {
+impl<S: States> Plugin for AttackPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, find_attack_target)
-            .add_systems(Update, attack_target);
+        app.add_systems(
+            PreUpdate,
+            find_attack_target.run_if(in_state(self.state.clone())),
+        )
+        .add_systems(Update, attack_target.run_if(in_state(self.state.clone())));
     }
 }
 
