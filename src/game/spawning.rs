@@ -11,7 +11,7 @@ use crate::resources::PlayerSettings;
 
 pub fn add_blueprint_components(
     entity_commands: &mut EntityCommands,
-    component_blueprints: &Vec<ComponentBlueprint>,
+    component_blueprints: &[ComponentBlueprint],
     player_settings: &Res<PlayerSettings>,
 ) {
     for component_blueprint in component_blueprints.iter() {
