@@ -43,7 +43,7 @@ pub fn spawn_unit(
             attack_speed: 2.,
             attack_range: 16. + 32. * 0., // Melee.
             damage: 1,
-            time_till_next_attack: Timer::new(Duration::from_secs(10), TimerMode::Repeating),
+            time_till_next_attack: Timer::new(Duration::from_secs(0), TimerMode::Once),
         },
         MovementSpeed(32. * 3.),
         SpriteBundle {
