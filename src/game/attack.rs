@@ -78,7 +78,6 @@ fn attack_target(
                 Duration::from_secs(1 as u64 / attack_stats.attack_speed as u64),
                 TimerMode::Once,
             );
-        
         } else {
             // If the target has no health component,
             // it probably died, so lets remove the attack target.
