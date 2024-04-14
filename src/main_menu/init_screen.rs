@@ -16,7 +16,7 @@ impl<S: States> Plugin for InitScreenPlugin<S> {
         app.add_systems(OnEnter(self.state.clone()), spawn_ui)
             .add_systems(
                 Update,
-                btn_play_interaction.run_if(in_state(self.state.clone())),
+                (btn_interaction_handler, btn_action_handler).run_if(in_state(self.state.clone())),
             );
     }
 }
@@ -32,8 +32,15 @@ const PRESSED_BUTTON: Color = Color::rgba(1., 1., 1., 0.5);
 #[derive(Component)]
 struct Label;
 
+#[derive(PartialEq)]
+enum ButtonAction {
+    Play,
+}
+
 #[derive(Component)]
-struct Button;
+struct MenuButton {
+    action: ButtonAction,
+}
 
 #[derive(Component)]
 struct BtnPlay;
@@ -77,8 +84,9 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             // Spawn button.
             builder
                 .spawn((
-                    Button,
-                    BtnPlay,
+                    MenuButton {
+                        action: ButtonAction::Play,
+                    },
                     ButtonBundle {
                         style: Style {
                             width: Val::Px(300.),
@@ -107,26 +115,40 @@ fn spawn_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-fn btn_play_interaction(
+fn btn_action_handler(
     mut commands: Commands,
-    mut query: Query<(&Interaction, &mut BackgroundColor), With<BtnPlay>>,
+    query: Query<(&Interaction, &MenuButton), Changed<Interaction>>,
     mut next_state: ResMut<NextState<AppState>>,
     loaded_factions: Option<Res<Factions>>,
 ) {
-    for (interaction, mut bg_colour) in &mut query {
+    for (interaction, menu_button) in query.iter() {
+        match *interaction {
+            Interaction::Pressed => match menu_button.action {
+                ButtonAction::Play => {
+                    if let Some(factions) = &loaded_factions {
+                        if let Some(selected_faction) = factions.0.first().cloned() {
+                            commands.insert_resource(SelectedFaction(selected_faction));
+                            next_state.set(AppState::Game)
+                        } else {
+                            error!("Couldn't get a faction from loaded factions to set as the selected faction.")
+                        }
+                    } else {
+                        error!("No factions loaded...")
+                    }
+                }
+            },
+            Interaction::Hovered | Interaction::None => {}
+        }
+    }
+}
+
+fn btn_interaction_handler(
+    mut query: Query<(&Interaction, &mut BackgroundColor), With<MenuButton>>,
+) {
+    for (interaction, mut bg_colour) in query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
                 *bg_colour = PRESSED_BUTTON.into();
-                if let Some(factions) = &loaded_factions {
-                    if let Some(selected_faction) = factions.0.first().cloned() {
-                        commands.insert_resource(SelectedFaction(selected_faction));
-                        next_state.set(AppState::Game)
-                    } else {
-                        error!("Couldn't get a faction from loaded factions to set as the selected faction.")
-                    }
-                } else {
-                    error!("No factions loaded...")
-                }
             }
             Interaction::Hovered => {
                 *bg_colour = HOVERED_BUTTON.into();
