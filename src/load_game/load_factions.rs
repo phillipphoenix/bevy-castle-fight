@@ -6,6 +6,7 @@ use bevy::app::{App, Plugin};
 use bevy::asset::io::Reader;
 use bevy::asset::*;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use serde::Deserialize;
 use serde_json::from_slice;
 use thiserror::Error;
@@ -110,8 +111,8 @@ struct UnitData {
 pub struct FactionBlueprint {
     pub id: String,
     pub name: String,
-    pub buildings: Vec<BuildingBlueprint>,
-    pub units: Vec<UnitBlueprint>,
+    pub buildings: HashMap<String, BuildingBlueprint>,
+    pub units: HashMap<String, UnitBlueprint>,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -146,6 +147,7 @@ pub enum ComponentBlueprint {
         attack_speed: f32,
         attack_range: i32,
     },
+    VisionRange(f32),
     OpponentFollower,
     MovementSpeed(i32),
     Visible,
@@ -199,22 +201,32 @@ fn setup_factions_resource(
                         buildings: faction
                             .buildings
                             .iter()
-                            .map(|building_asset| BuildingBlueprint {
-                                id: building_asset.id.clone(),
-                                name: building_asset.name.clone(),
-                                sprite: asset_server.load(&building_asset.sprite),
-                                icon: asset_server.load(&building_asset.icon),
-                                components: building_asset.components.clone(),
+                            .map(|building_asset| {
+                                (
+                                    building_asset.id.clone(),
+                                    BuildingBlueprint {
+                                        id: building_asset.id.clone(),
+                                        name: building_asset.name.clone(),
+                                        sprite: asset_server.load(&building_asset.sprite),
+                                        icon: asset_server.load(&building_asset.icon),
+                                        components: building_asset.components.clone(),
+                                    },
+                                )
                             })
                             .collect(),
                         units: faction
                             .units
                             .iter()
-                            .map(|unit_asset| UnitBlueprint {
-                                id: unit_asset.id.clone(),
-                                name: unit_asset.name.clone(),
-                                sprite: asset_server.load(&unit_asset.sprite),
-                                components: unit_asset.components.clone(),
+                            .map(|unit_asset| {
+                                (
+                                    unit_asset.id.clone(),
+                                    UnitBlueprint {
+                                        id: unit_asset.id.clone(),
+                                        name: unit_asset.name.clone(),
+                                        sprite: asset_server.load(&unit_asset.sprite),
+                                        components: unit_asset.components.clone(),
+                                    },
+                                )
                             })
                             .collect(),
                     };

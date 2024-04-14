@@ -106,7 +106,10 @@
         {
           "MovementSpeed": 96
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 80.0
+        }
       ]
     },
     {
@@ -131,7 +134,10 @@
         {
           "MovementSpeed": 96
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 96.0
+        }
       ]
     },
     {
@@ -156,7 +162,10 @@
         {
           "MovementSpeed": 80
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 80.0
+        }
       ]
     },
     {
@@ -181,7 +190,10 @@
         {
           "MovementSpeed": 64
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 80.0
+        }
       ]
     }
   ]

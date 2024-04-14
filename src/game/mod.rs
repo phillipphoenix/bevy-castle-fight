@@ -28,6 +28,7 @@ mod grid_traits;
 pub mod health;
 pub mod movement;
 mod resources;
+mod spawning;
 mod systems;
 pub mod teams;
 mod ui;

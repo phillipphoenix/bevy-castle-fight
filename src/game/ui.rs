@@ -2,9 +2,10 @@
 
 use bevy::prelude::*;
 
+use crate::game::building_spawning::InitPlaceBuildingEvent;
 use crate::game::InGameTag;
 use crate::load_game::load_factions::BuildingBlueprint;
-use crate::resources::SelectedFaction;
+use crate::resources::PlayerSettings;
 
 pub struct UiPlugin<S: States> {
     pub state: S,
@@ -15,21 +16,33 @@ impl<S: States> Plugin for UiPlugin<S> {
         app.add_systems(OnEnter(self.state.clone()), setup_ui)
             .add_systems(
                 Update,
-                building_btn_interactions.run_if(in_state(self.state.clone())),
+                (
+                    building_btn_interaction_handler,
+                    building_btn_action_handler,
+                )
+                    .run_if(in_state(self.state.clone())),
             );
     }
 }
 
 // --- Components ---
 
+enum ButtonAction {
+    /// Start building the building with the given ID.
+    BuildBuilding(BuildingBlueprint),
+}
+
 #[derive(Component)]
-struct BtnBuilding;
+struct BtnBuilding {
+    action: ButtonAction,
+}
+
 #[derive(Component)]
 struct BtnBuildingImage;
 
 // --- Systems ---
 
-fn setup_ui(mut commands: Commands, selected_faction: Res<SelectedFaction>) {
+fn setup_ui(mut commands: Commands, player_settings: Res<PlayerSettings>) {
     // Layout.
     commands
         .spawn((
@@ -88,7 +101,7 @@ fn setup_ui(mut commands: Commands, selected_faction: Res<SelectedFaction>) {
                             ..Default::default()
                         })
                         .with_children(|building_menu| {
-                            for building in &selected_faction.0.buildings {
+                            for building in player_settings.faction.buildings.values() {
                                 spawn_building_btn(building_menu, building);
                             }
                         });
@@ -96,18 +109,34 @@ fn setup_ui(mut commands: Commands, selected_faction: Res<SelectedFaction>) {
         });
 }
 
-fn building_btn_interactions(
+fn building_btn_action_handler(
+    mut ev_init_place_building: EventWriter<InitPlaceBuildingEvent>,
+    query: Query<(&Interaction, &BtnBuilding), Changed<Interaction>>,
+    player_settings: Res<PlayerSettings>,
+) {
+    for (interaction, building_btn) in query.iter() {
+        match *interaction {
+            Interaction::Pressed => match &building_btn.action {
+                ButtonAction::BuildBuilding(building_blueprint) => {
+                    ev_init_place_building.send(InitPlaceBuildingEvent(
+                        building_blueprint.clone(),
+                        player_settings.team,
+                    ));
+                }
+            },
+            Interaction::Hovered | Interaction::None => {}
+        }
+    }
+}
+
+#[allow(clippy::type_complexity)]
+fn building_btn_interaction_handler(
     query: Query<(&Interaction, &Children), (Changed<Interaction>, With<BtnBuilding>)>,
     mut image_query: Query<&mut BackgroundColor>,
 ) {
     for (interaction, children) in &query {
         let mut image_bg_color = image_query.get_mut(children[0]).unwrap();
         match *interaction {
-            // Interaction::Pressed => {
-            //     text.sections[0].value = "Press".to_string();
-            //     *color = PRESSED_BUTTON.into();
-            //     border_color.0 = Color::RED;
-            // }
             Interaction::Hovered => {
                 *image_bg_color = Color::rgba(1., 1., 1., 0.5).into();
             }
@@ -124,7 +153,9 @@ fn building_btn_interactions(
 fn spawn_building_btn(builder: &mut ChildBuilder, building_blueprint: &BuildingBlueprint) {
     builder
         .spawn((
-            BtnBuilding,
+            BtnBuilding {
+                action: ButtonAction::BuildBuilding(building_blueprint.clone()),
+            },
             ButtonBundle {
                 style: Style {
                     width: Val::Percent(100.),

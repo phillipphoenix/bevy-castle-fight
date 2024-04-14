@@ -2,9 +2,10 @@
 
 use bevy::prelude::*;
 
+use crate::game::teams::Team;
 use crate::load_game::load_factions::Factions;
 use crate::main_menu::MainMenuTag;
-use crate::resources::SelectedFaction;
+use crate::resources::PlayerSettings;
 use crate::AppState;
 
 pub struct InitScreenPlugin<S: States> {
@@ -127,7 +128,10 @@ fn btn_action_handler(
                 ButtonAction::Play => {
                     if let Some(factions) = &loaded_factions {
                         if let Some(selected_faction) = factions.0.first().cloned() {
-                            commands.insert_resource(SelectedFaction(selected_faction));
+                            commands.insert_resource(PlayerSettings {
+                                team: Team::Red,
+                                faction: selected_faction,
+                            });
                             next_state.set(AppState::Game)
                         } else {
                             error!("Couldn't get a faction from loaded factions to set as the selected faction.")
