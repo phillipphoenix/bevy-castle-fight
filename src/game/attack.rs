@@ -74,8 +74,11 @@ fn attack_target(
             info!("{:?} damage taken!", attack_stats.damage);
 
             //Set a new timer
-            attack_stats.time_till_next_attack = Timer::new(Duration::from_secs(1 as u64 /attack_stats.attack_speed as u64), TimerMode::Once)
-
+            attack_stats.time_till_next_attack = Timer::new(
+                Duration::from_secs(1 as u64 / attack_stats.attack_speed as u64),
+                TimerMode::Once,
+            );
+        
         } else {
             // If the target has no health component,
             // it probably died, so lets remove the attack target.
