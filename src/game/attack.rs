@@ -75,7 +75,7 @@ fn attack_target(
 
             //Set a new timer
             attack_stats.time_till_next_attack = Timer::new(
-                Duration::from_secs(1 as u64 / attack_stats.attack_speed as u64),
+                Duration::from_secs(1 / attack_stats.attack_speed as u64),
                 TimerMode::Once,
             );
         } else {
