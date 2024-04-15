@@ -1,5 +1,7 @@
+use std::time::Duration;
+
 use bevy::ecs::system::EntityCommands;
-use bevy::prelude::Res;
+use bevy::prelude::*;
 
 use crate::game::attack::AttackStats;
 use crate::game::health::Health;
@@ -40,7 +42,7 @@ pub fn add_blueprint_components(
                     damage: *damage,
                     attack_speed: *attack_speed,
                     attack_range: *attack_range as f32,
-                    time_till_next_attack: 0.,
+                    time_till_next_attack: Timer::new(Duration::from_secs(0), TimerMode::Once),
                 });
             }
             ComponentBlueprint::UnitSpawner {
