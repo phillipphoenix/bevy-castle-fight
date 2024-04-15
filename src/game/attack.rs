@@ -1,6 +1,7 @@
 use crate::game::health::Health;
 use crate::game::vision::InVision;
 use bevy::prelude::*;
+use std::time::Duration;
 
 // --- Plugin ---
 
@@ -26,7 +27,7 @@ pub struct AttackStats {
     pub attack_speed: f32,
     /// Used to check if the attack target is within striking range.
     pub attack_range: f32,
-    pub time_till_next_attack: f32,
+    pub time_till_next_attack: Timer,
 }
 
 #[derive(Component)]
@@ -60,8 +61,10 @@ fn attack_target(
 ) {
     for (entity, mut attack_stats, target) in attacker_query.iter_mut() {
         // Don't attack, if attack cooldown hasn't finished.
-        if attack_stats.time_till_next_attack > 0. {
-            attack_stats.time_till_next_attack -= time.delta_seconds();
+        if !attack_stats.time_till_next_attack.finished() {
+            // tick the timer
+            attack_stats.time_till_next_attack.tick(time.delta());
+
             return;
         }
 
@@ -69,8 +72,12 @@ fn attack_target(
             // TODO: Make a more intricate damage calculation.
             health.health -= attack_stats.damage;
             info!("{:?} damage taken!", attack_stats.damage);
-            // Reset attack cooldown.
-            attack_stats.time_till_next_attack = 1. / attack_stats.attack_speed;
+
+            //Set a new timer
+            attack_stats.time_till_next_attack = Timer::new(
+                Duration::from_secs(1 / attack_stats.attack_speed as u64),
+                TimerMode::Once,
+            );
         } else {
             // If the target has no health component,
             // it probably died, so lets remove the attack target.
