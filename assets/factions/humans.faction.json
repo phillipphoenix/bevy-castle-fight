@@ -6,6 +6,7 @@
       "id": "human_b_barracks",
       "name": "Barracks",
       "sprite": "faction-assets/human_b_barracks.png",
+      "icon": "faction-assets/human_b_barracks_icon.png",
       "components": [
         {
           "Health": {
@@ -25,6 +26,7 @@
       "id": "human_b_archery-range",
       "name": "Archery Range",
       "sprite": "faction-assets/human_b_archery-range.png",
+      "icon": "faction-assets/human_b_archery-range_icon.png",
       "components": [
         {
           "Health": {
@@ -44,6 +46,7 @@
       "id": "human_b_fire-mage-tower",
       "name": "Fire Mage Tower",
       "sprite": "faction-assets/human_b_fire-mage-tower.png",
+      "icon": "faction-assets/human_b_fire-mage-tower_icon.png",
       "components": [
         {
           "Health": {
@@ -63,6 +66,7 @@
       "id": "human_b_siege-workshop",
       "name": "Siege Workshop",
       "sprite": "faction-assets/human_b_siege-workshop.png",
+      "icon": "faction-assets/human_b_siege-workshop_icon.png",
       "components": [
         {
           "Health": {
@@ -102,7 +106,10 @@
         {
           "MovementSpeed": 96
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 80.0
+        }
       ]
     },
     {
@@ -127,7 +134,10 @@
         {
           "MovementSpeed": 96
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 96.0
+        }
       ]
     },
     {
@@ -152,7 +162,10 @@
         {
           "MovementSpeed": 80
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 80.0
+        }
       ]
     },
     {
@@ -177,7 +190,10 @@
         {
           "MovementSpeed": 64
         },
-        "Visible"
+        "Visible",
+        {
+          "VisionRange": 80.0
+        }
       ]
     }
   ]

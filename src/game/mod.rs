@@ -15,6 +15,7 @@ use unit_spawning::UnitSpawningPlugin;
 use vision::VisionPlugin;
 use waypoints::WaypointPlugin;
 
+use crate::game::ui::UiPlugin;
 use crate::AppState;
 
 //mod
@@ -27,8 +28,10 @@ mod grid_traits;
 pub mod health;
 pub mod movement;
 mod resources;
+mod spawning;
 mod systems;
 pub mod teams;
+mod ui;
 mod unit_spawning;
 mod units;
 pub mod vision;
@@ -44,6 +47,9 @@ impl Plugin for GamePlugin {
             },
             ResourcesPlugin,
             CameraPlugin,
+            UiPlugin {
+                state: AppState::Game,
+            },
             WaypointPlugin {
                 state: AppState::Game,
             },

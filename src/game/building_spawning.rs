@@ -6,6 +6,8 @@ use crate::game::buildings::{spawn_building, spawn_ghost_building, Building, Bui
 use crate::game::grid_traits::SnapToGrid;
 use crate::game::resources::MousePosition;
 use crate::game::teams::Team;
+use crate::load_game::load_factions::BuildingBlueprint;
+use crate::resources::PlayerSettings;
 
 // --- Plugin ---
 
@@ -15,11 +17,11 @@ pub struct BuildingSpawningPlugin<S: States> {
 
 impl<S: States> Plugin for BuildingSpawningPlugin<S> {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_event::<InitPlaceBuildingEvent>().add_systems(
             Update,
             (
-                test_init_build_building,
-                update_ghost_building_position,
+                on_init_place_building,
+                update_ghost_building_position.after(on_init_place_building),
                 cancel_building,
                 ghost_building_collision_system,
                 building_placement,
@@ -29,34 +31,36 @@ impl<S: States> Plugin for BuildingSpawningPlugin<S> {
     }
 }
 
+// --- Events ---
+
+#[derive(Event)]
+pub struct InitPlaceBuildingEvent(pub BuildingBlueprint, pub Team);
+
 // --- Systems ---
 
-fn test_init_build_building(
+fn on_init_place_building(
     mut commands: Commands,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    asset_server: Res<AssetServer>,
+    mut ev_place_building: EventReader<InitPlaceBuildingEvent>,
     query: Query<Entity, With<BuildingGhost>>,
     mouse_position: Res<MousePosition>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::KeyQ) && query.is_empty() {
-        let building_sprite = asset_server.load("prototype-building.png");
-        spawn_ghost_building(
-            &mut commands,
-            Team::Red,
-            mouse_position.x,
-            mouse_position.y,
-            building_sprite,
-        )
+    // If there is already a ghost building, clear the queue,
+    // as we can only build one building at a time.
+    if !query.is_empty() {
+        ev_place_building.clear();
+        return;
     }
-    if keyboard_input.just_pressed(KeyCode::KeyW) && query.is_empty() {
-        let building_sprite = asset_server.load("prototype-building.png");
+
+    for ev in ev_place_building.read() {
+        let building_blueprint = &ev.0;
+        let team = &ev.1;
         spawn_ghost_building(
             &mut commands,
-            Team::Blue,
+            *team,
             mouse_position.x,
             mouse_position.y,
-            building_sprite,
-        )
+            building_blueprint.clone(),
+        );
     }
 }
 
@@ -145,18 +149,18 @@ fn building_placement(
     mut commands: Commands,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
     mut ghost_query: Query<(Entity, &BuildingGhost, &Transform), With<BuildingGhost>>,
-    asset_server: Res<AssetServer>,
+    player_settings: Res<PlayerSettings>,
 ) {
     if let Ok((ghost_entity, ghost_building, ghost_transform)) = ghost_query.get_single_mut() {
         if ghost_building.placement_valid && mouse_button_input.just_pressed(MouseButton::Left) {
             commands.entity(ghost_entity).despawn_recursive();
-            let building_sprite = asset_server.load("prototype-building.png");
             spawn_building(
                 &mut commands,
                 ghost_building.team,
                 ghost_transform.translation.x,
                 ghost_transform.translation.y,
-                building_sprite,
+                ghost_building.building_blueprint.clone(),
+                &player_settings,
             )
         }
     }

@@ -6,6 +6,7 @@ use bevy::app::{App, Plugin};
 use bevy::asset::io::Reader;
 use bevy::asset::*;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use serde::Deserialize;
 use serde_json::from_slice;
 use thiserror::Error;
@@ -92,6 +93,7 @@ struct BuildingData {
     id: String,
     name: String,
     sprite: String,
+    icon: String,
     components: Vec<ComponentBlueprint>,
 }
 
@@ -105,23 +107,24 @@ struct UnitData {
 
 // --- Resource types ---
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Clone, Reflect)]
 pub struct FactionBlueprint {
     pub id: String,
     pub name: String,
-    pub buildings: Vec<BuildingBlueprint>,
-    pub units: Vec<UnitBlueprint>,
+    pub buildings: HashMap<String, BuildingBlueprint>,
+    pub units: HashMap<String, UnitBlueprint>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Reflect)]
 pub struct BuildingBlueprint {
     pub id: String,
     pub name: String,
     pub sprite: Handle<Image>,
+    pub icon: Handle<Image>,
     pub components: Vec<ComponentBlueprint>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Reflect)]
 pub struct UnitBlueprint {
     pub id: String,
     pub name: String,
@@ -129,7 +132,7 @@ pub struct UnitBlueprint {
     pub components: Vec<ComponentBlueprint>,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Debug, PartialEq, Clone, Reflect)]
 pub enum ComponentBlueprint {
     UnitSpawner {
         unit_id: String,
@@ -144,6 +147,7 @@ pub enum ComponentBlueprint {
         attack_speed: f32,
         attack_range: i32,
     },
+    VisionRange(f32),
     OpponentFollower,
     MovementSpeed(i32),
     Visible,
@@ -154,8 +158,8 @@ pub enum ComponentBlueprint {
 #[derive(Resource)]
 struct FactionsFolderHandle(Handle<LoadedFolder>);
 
-#[derive(Resource)]
-struct Factions(Vec<FactionBlueprint>);
+#[derive(Resource, Reflect)]
+pub struct Factions(pub Vec<FactionBlueprint>);
 
 // --- Systems ---
 
@@ -197,21 +201,32 @@ fn setup_factions_resource(
                         buildings: faction
                             .buildings
                             .iter()
-                            .map(|building_asset| BuildingBlueprint {
-                                id: building_asset.id.clone(),
-                                name: building_asset.name.clone(),
-                                sprite: asset_server.load(&building_asset.sprite),
-                                components: building_asset.components.clone(),
+                            .map(|building_asset| {
+                                (
+                                    building_asset.id.clone(),
+                                    BuildingBlueprint {
+                                        id: building_asset.id.clone(),
+                                        name: building_asset.name.clone(),
+                                        sprite: asset_server.load(&building_asset.sprite),
+                                        icon: asset_server.load(&building_asset.icon),
+                                        components: building_asset.components.clone(),
+                                    },
+                                )
                             })
                             .collect(),
                         units: faction
                             .units
                             .iter()
-                            .map(|unit_asset| UnitBlueprint {
-                                id: unit_asset.id.clone(),
-                                name: unit_asset.name.clone(),
-                                sprite: asset_server.load(&unit_asset.sprite),
-                                components: unit_asset.components.clone(),
+                            .map(|unit_asset| {
+                                (
+                                    unit_asset.id.clone(),
+                                    UnitBlueprint {
+                                        id: unit_asset.id.clone(),
+                                        name: unit_asset.name.clone(),
+                                        sprite: asset_server.load(&unit_asset.sprite),
+                                        components: unit_asset.components.clone(),
+                                    },
+                                )
                             })
                             .collect(),
                     };
@@ -219,7 +234,8 @@ fn setup_factions_resource(
                     faction_blueprints.push(faction_blueprint);
                 }
 
-                commands.insert_resource(Factions(faction_blueprints))
+                commands.insert_resource(Factions(faction_blueprints));
+                info!("Factions resource has been inserted!");
             }
         }
     }
@@ -227,7 +243,6 @@ fn setup_factions_resource(
 
 /// This is a test function to see that it works. When factions are in use, this should be removed.
 fn display_content(
-    mut commands: Commands,
     factions_res: Option<Res<Factions>>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
@@ -239,9 +254,8 @@ fn display_content(
     for faction in factions.0.iter() {
         info!("FACTION: {:?}", faction);
     }
-    commands.remove_resource::<Factions>();
 
     // Moving to the next state here is temporary.
-    next_state.set(AppState::Game);
-    println!("Entered Game State")
+    next_state.set(AppState::MainMenu);
+    println!("Entered Main Menu")
 }

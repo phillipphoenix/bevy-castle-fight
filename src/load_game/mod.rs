@@ -4,7 +4,7 @@ use crate::load_game::load_factions::FactionLoaderPlugin;
 use crate::load_game::LoadingSet::{LoadStartup, LoadUpdate};
 use crate::AppState;
 
-mod load_factions;
+pub mod load_factions;
 
 pub struct LoadGamePlugin;
 
@@ -23,7 +23,7 @@ impl Plugin for LoadGamePlugin {
             .add_plugins(FactionLoaderPlugin)
             // Third party plugins.
             // Third party resources
-            //State Transitions
+            // State Transitions
             // Systems
             .add_systems(Update, apply_deferred.after(LoadStartup).before(LoadUpdate));
     }

@@ -1,12 +1,14 @@
+use bevy::app::{App, Plugin};
+use bevy::input::common_conditions::input_toggle_active;
+use bevy::prelude::KeyCode;
+use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
+
 use crate::game::health::Health;
 use crate::game::movement::{MoveTarget, MoveToPoint, WaypointFollower};
 use crate::game::teams::Team;
 use crate::game::vision::{InVision, VisionRange};
 use crate::game::waypoints::{IsStartPoint, Waypoint, WaypointMap};
-use bevy::app::{App, Plugin};
-use bevy::input::common_conditions::input_toggle_active;
-use bevy::prelude::KeyCode;
-use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
+use crate::load_game::load_factions::Factions;
 
 pub struct InspectorPlugin;
 
@@ -15,6 +17,8 @@ impl Plugin for InspectorPlugin {
         app.add_plugins((
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
             ResourceInspectorPlugin::<WaypointMap>::default()
+                .run_if(input_toggle_active(true, KeyCode::Escape)),
+            ResourceInspectorPlugin::<Factions>::default()
                 .run_if(input_toggle_active(true, KeyCode::Escape)),
         ))
         // Types.

@@ -8,11 +8,8 @@ pub fn transition_to_game_state(
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     let current_state = simulation_state.get();
-    if keyboard_input.just_pressed(KeyCode::KeyG)
-        && *current_state != AppState::Game
-        && *current_state != AppState::LoadGameAssets
-    {
-        next_state.set(AppState::LoadGameAssets);
+    if keyboard_input.just_pressed(KeyCode::KeyG) && *current_state != AppState::Game {
+        next_state.set(AppState::Game);
         println!("Entered Load Game State")
     }
 }
